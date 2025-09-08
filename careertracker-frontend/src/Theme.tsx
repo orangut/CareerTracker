@@ -4,6 +4,51 @@ import CheckCircleFilledIcon from '@mui/icons-material/CheckCircle';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
+// Light theme configuration
+export const lightTheme = createTheme({
+    palette: {
+        mode: 'light',
+        background: {
+            default: '#f5f5f5',
+            paper: '#ffffff',
+        },
+        primary: {
+            main: '#2196f3',
+        },
+        secondary: {
+            main: '#ff4081',
+        },
+    },
+    typography: {
+        fontFamily: 'Inter, sans-serif',
+    },
+    components: {
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 8,
+                },
+            },
+        },
+        MuiCard: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 12,
+                },
+            },
+        },
+        MuiPaper: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 12,
+                },
+            },
+        },
+    },
+});
+
+// Dark theme configuration
+// TODO: Implement with all components darkMode
 export const darkTheme = createTheme({
     palette: {
         mode: 'dark',

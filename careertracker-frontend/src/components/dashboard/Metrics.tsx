@@ -11,11 +11,11 @@ const StyledMetricCard = styled(Box)(({theme}) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     transition: 'transform 0.2s',
+    minWidth: 180, // Add this line to set a fixed width
     '&:hover': {
         transform: 'scale(1.02)',
     },
 }));
-
 
 const StyledIconButton = styled(Box)<{
     color: string
@@ -58,12 +58,12 @@ const Metrics = (jobData: JobApplication[]) => {
     const metrics: MetricsData = calculateMetrics(jobData);
 
     return (
-        <Grid container spacing={2} sx={{mb: 4}}>
+        <Grid container sx={{mb: 4}}>
             {(Object.entries(metrics) as [keyof MetricsData, number][]).map(([key, value]) => {
                 const {icon: IconComponent, color: iconColor, title} = metricsConfig[key];
 
                 return (
-                    <Grid key={key}>
+                    <Grid key={key} sx={{xs: 12, sm: 6, md: 3}}>
                         <StyledMetricCard>
                             <Box>
                                 <Typography variant="body2" color="text.secondary">
