@@ -1,56 +1,58 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import type {SelectChangeEvent} from '@mui/material';
-import {Box, FormControl, InputAdornment, InputLabel, MenuItem, Select, Stack, TextField,} from '@mui/material';
+import {Box, FormControl, InputAdornment, InputLabel, MenuItem, Select, Stack, TextField} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import type {AllInterestLevelsType, AllRemoteOptionsType, AllStagesType,} from '../Constants';
+import JobApplication, {allInterestLevels, allRemoteOptions, allStages} from '../../models/JobApplication';
 
 interface DashboardFilterProps {
-    onFilterChange: (filters: {
-        freeText?: string;
-        currentStage?: AllStagesType | '';
-        interestLevel?: AllInterestLevelsType | '';
-        jobType?: AllRemoteOptionsType | '';
-    }) => void;
-    currentStages: readonly AllStagesType[];
-    interestLevels: readonly AllInterestLevelsType[];
-    jobTypes: readonly AllRemoteOptionsType[];
+    onFilteredJobsChange: (filteredJobs: JobApplication[]) => void;
+    jobData: JobApplication[];
 }
 
-const DashboardFilter: React.FC<DashboardFilterProps> = ({
-                                                             onFilterChange,
-                                                             currentStages,
-                                                             interestLevels,
-                                                             jobTypes,
-                                                         }) => {
+const DashboardFilter: React.FC<DashboardFilterProps> = ({onFilteredJobsChange, jobData}) => {
     const [filters, setFilters] = React.useState({
         freeText: '',
         currentStage: '',
-        interestLevel: '',
-        jobType: '',
+        interestLevel: 0,
+        remoteOption: '',
     });
+
+    useEffect(() => {
+        const filteredJobs = jobData.filter((job) => {
+            const matchesFreeText =
+                filters.freeText === '' ||
+                job.position.toLowerCase().includes(filters.freeText.toLowerCase()) ||
+                job.company.toLowerCase().includes(filters.freeText.toLowerCase());
+            const matchesCurrentStage =
+                filters.currentStage === '' || job.currentStage === filters.currentStage;
+            const matchesInterestLevel = Number(job.interestLevel) >= Number(filters.interestLevel);
+            const matchesRemoteOption =
+                filters.remoteOption === '' || job.remoteOption === filters.remoteOption;
+
+            return matchesFreeText && matchesCurrentStage && matchesInterestLevel && matchesRemoteOption;
+        });
+
+        onFilteredJobsChange(filteredJobs);
+    }, [filters, jobData, onFilteredJobsChange]);
 
     const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newFreeText = event.target.value;
         setFilters((prev) => ({...prev, freeText: newFreeText}));
-        onFilterChange({freeText: newFreeText});
     };
 
     const handleCurrentStageChange = (event: SelectChangeEvent) => {
         const newCurrentStage = event.target.value;
         setFilters((prev) => ({...prev, currentStage: newCurrentStage}));
-        onFilterChange({currentStage: newCurrentStage as AllStagesType | ''});
     };
 
     const handleInterestLevelChange = (event: SelectChangeEvent<string | number>) => {
         const newInterestLevel = event.target.value;
-        setFilters((prev) => ({...prev, interestLevel: String(newInterestLevel)}));
-        onFilterChange({interestLevel: newInterestLevel as AllInterestLevelsType | ''});
+        setFilters((prev) => ({...prev, interestLevel: newInterestLevel as number | 0}));
     };
 
-    const handleJobTypeChange = (event: SelectChangeEvent) => {
-        const newJobType = event.target.value;
-        setFilters((prev) => ({...prev, jobType: newJobType}));
-        onFilterChange({jobType: newJobType as AllRemoteOptionsType | ''});
+    const handleRemoteOptionChange = (event: SelectChangeEvent) => {
+        const newRemoteOption = event.target.value;
+        setFilters((prev) => ({...prev, remoteOption: newRemoteOption}));
     };
 
     return (
@@ -99,7 +101,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                         <MenuItem value="">
                             <em>All Stages</em>
                         </MenuItem>
-                        {currentStages.map((stage) => (
+                        {allStages.map((stage) => (
                             <MenuItem key={stage} value={stage}>
                                 {stage.replace('_', ' ')}
                             </MenuItem>
@@ -117,7 +119,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                         <MenuItem value="">
                             <em>All Interest</em>
                         </MenuItem>
-                        {interestLevels.map((level) => (
+                        {allInterestLevels.map((level) => (
                             <MenuItem key={level} value={level}>
                                 {level === 0 ? 'Not Interested' : `Level ${level}`}
                             </MenuItem>
@@ -128,14 +130,14 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                 <FormControl sx={{minWidth: 160}}>
                     <InputLabel>All Types</InputLabel>
                     <Select
-                        value={filters.jobType}
+                        value={filters.remoteOption}
                         label="All Types"
-                        onChange={handleJobTypeChange}
+                        onChange={handleRemoteOptionChange}
                     >
                         <MenuItem value="">
                             <em>All Types</em>
                         </MenuItem>
-                        {jobTypes.map((type) => (
+                        {allRemoteOptions.map((type) => (
                             <MenuItem key={type} value={type}>
                                 {type}
                             </MenuItem>

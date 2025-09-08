@@ -3,14 +3,14 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import EditIcon from '@mui/icons-material/Edit';
-import type {JobApplication} from '../Constants';
+import type JobApplication from "../../models/JobApplication.ts";
 
 interface JobApplicationCardProps {
     job: JobApplication;
 }
 
 // Helper function for status chip styles
-const getStatusChipStyles = (status: JobApplication['current_stage']) => {
+const getStatusChipStyles = (status: JobApplication['currentStage']) => {
     switch (status) {
         case 'applied':
             return {bgcolor: 'rgba(0, 150, 255, 0.1)', color: 'info.dark'}; // Blue
@@ -30,8 +30,8 @@ const getStatusChipStyles = (status: JobApplication['current_stage']) => {
 };
 
 // Helper function for job type chip styles
-const getJobTypeChipStyles = (jobType: JobApplication['remote_option']) => {
-    switch (jobType) {
+const getRemoteOptionChipStyles = (remoteOption: JobApplication['remoteOption']) => {
+    switch (remoteOption) {
         case 'remote':
             return {bgcolor: 'rgba(0, 128, 0, 0.1)', color: 'success.dark'};
         case 'hybrid':
@@ -49,7 +49,7 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
         month: 'short',
         day: 'numeric',
     } as Intl.DateTimeFormatOptions;
-    const formattedDate = new Date(job.application_date).toLocaleDateString(
+    const formattedDate = new Date(job.applicationDate).toLocaleDateString(
         'en-US',
         dateOptions
     );
@@ -132,26 +132,26 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                 >
                     <Rating
                         name="job-rating"
-                        value={job.interest_level}
+                        value={job.interestLevel}
                         readOnly
                         precision={0.5}
                     />
                     <Chip
-                        label={job.remote_option}
+                        label={job.remoteOption}
                         size="small"
-                        sx={getJobTypeChipStyles(job.remote_option)}
+                        sx={getRemoteOptionChipStyles(job.remoteOption)}
                     />
                 </Stack>
 
                 {/* Status and View Details Link */}
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Chip
-                        label={job.current_stage.replace('_', ' ')}
+                        label={job.currentStage.replace('_', ' ')}
                         size="small"
-                        sx={getStatusChipStyles(job.current_stage)}
+                        sx={getStatusChipStyles(job.currentStage)}
                     />
                     <Link
-                        href={job.job_url}
+                        href={job.jobUrl}
                         target="_blank"
                         rel="noopener"
                         variant="body2"
@@ -167,7 +167,7 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                 sx={{p: 3, pt: 0, display: 'flex', justifyContent: 'flex-start', pl: 2}}
             >
                 <Typography variant="h6" sx={{fontWeight: 'bold', fontSize: 14}}>
-                    {job.salary_range ? job.salary_range : '-'}
+                    {job.salaryRange ? job.salaryRange : '-'}
                 </Typography>
             </Box>
         </Card>
