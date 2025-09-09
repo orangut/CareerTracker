@@ -58,7 +58,7 @@ const Metrics = (jobData: JobApplication[]) => {
     const metrics: MetricsData = calculateMetrics(jobData);
 
     return (
-        <Grid container sx={{mb: 4}}>
+        <Grid container spacing={5} sx={{mb: 4}} >
             {(Object.entries(metrics) as [keyof MetricsData, number][]).map(([key, value]) => {
                 const {icon: IconComponent, color: iconColor, title} = metricsConfig[key];
 
