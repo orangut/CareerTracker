@@ -10,7 +10,7 @@ export const allStages = [
 
 export const allInterestLevels = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5] as const;
 
-export const allRemoteOptions = ['remote', 'hybrid', 'onsite'] as const;
+export const allRemoteOptions = ['hybrid', 'onsite', 'remote'] as const;
 
 export type AllStagesType = typeof allStages[number];
 export type AllInterestLevelsType = typeof allInterestLevels[number];
@@ -25,11 +25,13 @@ class JobApplication {
     applicationDate: Date | string;
     interestLevel: AllInterestLevelsType;
     currentStage: AllStagesType;
-    salaryRange?: string;
+    salaryMin: number | null;
+    salaryMax: number | null;
     remoteOption: AllRemoteOptionsType;
     jobUrl: string;
     isEdit: boolean;
     stages?: string[];
+    notes?: string
 
     constructor(data: JobApplication) {
         this.id = data.id;
@@ -39,11 +41,13 @@ class JobApplication {
         this.applicationDate = new Date(data.applicationDate); // Convert string to Date object TODO: applied current date.
         this.interestLevel = data.interestLevel;
         this.currentStage = data.currentStage; // TODO: Initial with default stage, when there will be a timeline of stages.
-        this.salaryRange = data.salaryRange;
+        this.salaryMin = data.salaryMin;
+        this.salaryMax = data.salaryMax;
         this.remoteOption = data.remoteOption;
         this.jobUrl = data.jobUrl;
         this.isEdit = data.isEdit;
         this.stages = []; // TODO: create array of stages component
+        this.notes = data?.notes;
     }
 
     // public getFormattedDate(): string {

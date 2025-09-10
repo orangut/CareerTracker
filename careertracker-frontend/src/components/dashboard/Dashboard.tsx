@@ -7,7 +7,13 @@ import JobApplication from "../../models/JobApplication";
 import {lightTheme} from "../../Theme.tsx";
 import Metrics from "./Metrics.tsx";
 
-const Dashboard = ({jobData}: { jobData: JobApplication[] }) => {
+interface DashboardProps {
+    jobData: JobApplication[];
+    setJobData: (jobs: JobApplication[]) => void;
+    onNavigateToAddApplication: () => void;
+}
+
+const Dashboard = ({jobData, setJobData, onNavigateToAddApplication}: DashboardProps) => {
     const [filteredJobs, setFilteredJobs] = React.useState<JobApplication[]>(jobData);
 
     // const theme = useTheme();
@@ -31,6 +37,7 @@ const Dashboard = ({jobData}: { jobData: JobApplication[] }) => {
                             variant="contained"
                             color="primary"
                             startIcon={<AddIcon/>}
+                            onClick={onNavigateToAddApplication}
                         >
                             Add Application
                         </Button>

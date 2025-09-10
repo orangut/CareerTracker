@@ -167,7 +167,7 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                 sx={{p: 3, pt: 0, display: 'flex', justifyContent: 'flex-start', pl: 2}}
             >
                 <Typography variant="h6" sx={{fontWeight: 'bold', fontSize: 14}}>
-                    {job.salaryRange ? job.salaryRange : '-'}
+                    {job?.salaryMin ? `${job.salaryMin.toString()}k$` : '?'} - {job?.salaryMax ? `${job.salaryMax}k$` : '?'}
                 </Typography>
             </Box>
         </Card>
