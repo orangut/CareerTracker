@@ -1,10 +1,16 @@
 import Dashboard from "./components/dashboard/Dashboard.tsx";
-import type JobApplication from "./models/JobApplication.ts";
+import { JobApplicationProvider } from './context/JobApplicationContext';
+import { jobData } from './Constants';
 
 
-const App = ({jobData}: { jobData: JobApplication[] }) => {
+const App = () => {
+
+    const usersJobApplications = jobData; // Replace with actual data fetching logic
+    
     return (
-        <Dashboard jobData={jobData}/>
+        <JobApplicationProvider initialJobApplications={usersJobApplications}>
+            <Dashboard />
+        </JobApplicationProvider>
     );
 };
 

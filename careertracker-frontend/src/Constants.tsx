@@ -1,9 +1,9 @@
-import JobApplication from './models/JobApplication.ts'
-import type {AllRemoteOptionsType, AllStagesType, AllInterestLevelsType} from "./models/JobApplication.ts";
+import { type JobApplication } from './models/JobApplication.ts'
+import type { AllRemoteOptionsType, AllStagesType, AllInterestLevelsType } from "./models/JobApplication.ts";
 
 
 export const jobData: JobApplication[] = [
-    new JobApplication({
+    {
         id: '1',
         company: 'Microsoft',
         position: 'Software Engineer',
@@ -15,8 +15,8 @@ export const jobData: JobApplication[] = [
         remoteOption: 'hybrid' as AllRemoteOptionsType,
         isEdit: true,
         jobUrl: 'https://jobs.careers.microsoft.com/global/en/job/1768669/Software-Engineer---Cloud-and-Enterprise-Security',
-    }),
-    new JobApplication({
+    },
+    {
         id: '2',
         company: 'Cybernetics Corp.',
         position: 'Backend Developer',
@@ -28,8 +28,8 @@ export const jobData: JobApplication[] = [
         remoteOption: 'remote' as AllRemoteOptionsType,
         isEdit: true,
         jobUrl: 'https://www.cybernetics.com/jobs/backend-dev-2',
-    }),
-    new JobApplication({
+    },
+    {
         id: '3',
         company: 'Creative Studio',
         position: 'UI/UX Designer',
@@ -41,8 +41,8 @@ export const jobData: JobApplication[] = [
         remoteOption: 'hybrid' as AllRemoteOptionsType,
         isEdit: true,
         jobUrl: 'https://www.creativestudio.com/jobs/designer-3',
-    }),
-    new JobApplication({
+    },
+    {
         id: '4',
         company: 'Legacy Systems',
         position: 'Systems Administrator',
@@ -54,8 +54,8 @@ export const jobData: JobApplication[] = [
         remoteOption: 'onsite' as AllRemoteOptionsType,
         isEdit: true,
         jobUrl: 'https://www.legacysystems.com/jobs/sysadmin-4',
-    }),
-    new JobApplication({
+    },
+    {
         id: '5',
         company: 'Quantum Dynamics',
         position: 'Quantum Engineer',
@@ -67,5 +67,5 @@ export const jobData: JobApplication[] = [
         remoteOption: 'hybrid' as AllRemoteOptionsType,
         isEdit: true,
         jobUrl: 'https://www.quantumdynamics.com/jobs/quantum-eng-5',
-    }),
+    },
 ];
