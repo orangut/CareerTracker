@@ -1,15 +1,15 @@
-import React, {useEffect} from 'react';
-import type {SelectChangeEvent} from '@mui/material';
-import {Box, FormControl, InputAdornment, InputLabel, MenuItem, Select, Stack, TextField} from '@mui/material';
+import React, { useEffect } from 'react';
+import type { SelectChangeEvent } from '@mui/material';
+import { Box, FormControl, InputAdornment, InputLabel, MenuItem, Select, Stack, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import JobApplication, {allInterestLevels, allRemoteOptions, allStages} from '../../models/JobApplication';
+import { type JobApplication, allInterestLevels, allRemoteOptions, allStages } from '../../models/JobApplication';
 
 interface DashboardFilterProps {
     onFilteredJobsChange: (filteredJobs: JobApplication[]) => void;
     jobData: JobApplication[];
 }
 
-const DashboardFilter: React.FC<DashboardFilterProps> = ({onFilteredJobsChange, jobData}) => {
+const DashboardFilter: React.FC<DashboardFilterProps> = ({ onFilteredJobsChange, jobData }) => {
     const [filters, setFilters] = React.useState({
         freeText: '',
         currentStage: '',
@@ -37,22 +37,22 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({onFilteredJobsChange, 
 
     const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newFreeText = event.target.value;
-        setFilters((prev) => ({...prev, freeText: newFreeText}));
+        setFilters((prev) => ({ ...prev, freeText: newFreeText }));
     };
 
     const handleCurrentStageChange = (event: SelectChangeEvent) => {
         const newCurrentStage = event.target.value;
-        setFilters((prev) => ({...prev, currentStage: newCurrentStage}));
+        setFilters((prev) => ({ ...prev, currentStage: newCurrentStage }));
     };
 
     const handleInterestLevelChange = (event: SelectChangeEvent<string | number>) => {
         const newInterestLevel = event.target.value;
-        setFilters((prev) => ({...prev, interestLevel: newInterestLevel as number | 0}));
+        setFilters((prev) => ({ ...prev, interestLevel: newInterestLevel as number | 0 }));
     };
 
     const handleRemoteOptionChange = (event: SelectChangeEvent) => {
         const newRemoteOption = event.target.value;
-        setFilters((prev) => ({...prev, remoteOption: newRemoteOption}));
+        setFilters((prev) => ({ ...prev, remoteOption: newRemoteOption }));
     };
 
     return (
@@ -68,30 +68,30 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({onFilteredJobsChange, 
             }}
         >
             <Stack
-                direction={{xs: 'column', md: 'row'}}
+                direction={{ xs: 'column', md: 'row' }}
                 spacing={2}
                 alignItems="center"
                 justifyContent="center"
-                sx={{width: '100%'}}
+                sx={{ width: '100%' }}
             >
                 <TextField
                     label="Search applications..."
                     variant="outlined"
                     value={filters.freeText}
                     onChange={handleTextChange}
-                    sx={{flex: {md: 2}}}
+                    sx={{ flex: { md: 2 } }}
                     slotProps={{
                         input: {
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <SearchIcon/>
+                                    <SearchIcon />
                                 </InputAdornment>
                             ),
                         }
                     }}
                 />
 
-                <FormControl sx={{minWidth: 160}}>
+                <FormControl sx={{ minWidth: 160 }}>
                     <InputLabel>All Stages</InputLabel>
                     <Select
                         value={filters.currentStage}
@@ -109,7 +109,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({onFilteredJobsChange, 
                     </Select>
                 </FormControl>
 
-                <FormControl sx={{minWidth: 160}}>
+                <FormControl sx={{ minWidth: 160 }}>
                     <InputLabel>All Interest</InputLabel>
                     <Select
                         value={filters.interestLevel}
@@ -127,7 +127,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({onFilteredJobsChange, 
                     </Select>
                 </FormControl>
 
-                <FormControl sx={{minWidth: 160}}>
+                <FormControl sx={{ minWidth: 160 }}>
                     <InputLabel>All Types</InputLabel>
                     <Select
                         value={filters.remoteOption}
