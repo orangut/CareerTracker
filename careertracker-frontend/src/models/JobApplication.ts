@@ -17,7 +17,7 @@ export type AllInterestLevelsType = typeof allInterestLevels[number];
 export type AllRemoteOptionsType = typeof allRemoteOptions[number];
 
 
-class JobApplication {
+export type JobApplication = {
     id: string;
     company: string;
     position: string;
@@ -31,25 +31,4 @@ class JobApplication {
     isEdit: boolean;
     stages?: string[];
 
-    constructor(data: JobApplication) {
-        this.id = data.id;
-        this.company = data.company;
-        this.position = data.position;
-        this.location = data.location;
-        this.applicationDate = new Date(data.applicationDate); // Convert string to Date object TODO: applied current date.
-        this.interestLevel = data.interestLevel;
-        this.currentStage = data.currentStage; // TODO: Initial with default stage, when there will be a timeline of stages.
-        this.salaryRange = data.salaryRange;
-        this.remoteOption = data.remoteOption;
-        this.jobUrl = data.jobUrl;
-        this.isEdit = data.isEdit;
-        this.stages = []; // TODO: create array of stages component
-    }
-
-    // public getFormattedDate(): string {
-    //     const dateOptions = {year: 'numeric', month: 'short', day: 'numeric'} as Intl.DateTimeFormatOptions;
-    //     return this.applicationDate.toLocaleDateString('en-US', dateOptions);
-    // }
 }
-
-export default JobApplication

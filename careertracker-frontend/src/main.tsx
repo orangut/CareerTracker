@@ -1,10 +1,13 @@
-import {StrictMode} from 'react'
-import {createRoot} from 'react-dom/client'
-import {jobData} from "./Constants.tsx";
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
 import App from "./App.tsx";
+import { ThemeProvider } from '@mui/material';
+import { lightTheme } from "./Theme.tsx";
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <App jobData={jobData}/>
+        <ThemeProvider theme={lightTheme}>
+            <App />
+        </ThemeProvider>
     </StrictMode>,
 )
