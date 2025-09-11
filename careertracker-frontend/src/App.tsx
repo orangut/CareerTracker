@@ -1,9 +1,9 @@
 import {useState} from 'react';
 import Dashboard from "./components/dashboard/Dashboard";
 import {jobData as initialJobData} from "./Constants";
-import JobApplication from "./models/JobApplication";
+import {type JobApplication} from "./models/JobApplication";
 import {v4 as uuidv4} from 'uuid';
-import AddApplicationPage from "./components/addApplication/AddApplication";
+import AddApplicationPage from "./components/AddApplication.tsx";
 
 
 const App = () => {

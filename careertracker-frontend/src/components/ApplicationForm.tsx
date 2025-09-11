@@ -1,9 +1,9 @@
-import React, {useState} from 'react';
+import React, {forwardRef, useImperativeHandle, useState} from 'react';
 import {
     Box,
-    Button,
     Container,
     FormControl,
+    IconButton,
     InputLabel,
     MenuItem,
     Rating,
@@ -13,36 +13,52 @@ import {
     TextField,
     Typography,
     useMediaQuery,
-    useTheme,
-    IconButton
+    useTheme
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-import JobApplication, {type AllInterestLevelsType, allRemoteOptions, allStages} from '../../models/JobApplication';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import JobApplication, {type AllInterestLevelsType, allRemoteOptions, allStages} from '../models/JobApplication';
 
-interface AddApplicationPageProps {
-    onGoBack: () => void;
-    onSubmit: (newJob: Omit<JobApplication, 'id' | 'isEdit'>) => void;
+interface ApplicationFormProps {
+    initialJob?: JobApplication;
+    onSubmit: (jobData: Omit<JobApplication, 'id' | 'isEdit'>) => void;
 }
 
-const AddApplicationPage: React.FC<AddApplicationPageProps> = ({onGoBack, onSubmit}) => {
+
+export interface ApplicationFormHandle {
+    validateAndSubmit: () => void;
+}
+
+const ApplicationForm = forwardRef<ApplicationFormHandle, ApplicationFormProps>(({
+                                                                                     initialJob,
+                                                                                     onSubmit,
+                                                                                 }, ref) => {
+
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+
     const [formState, setFormState] = useState<Omit<JobApplication, 'id' | 'isEdit'>>({
-        company: '',
-        position: '',
-        location: '',
-        applicationDate: new Date().toISOString().split('T')[0],
-        interestLevel: 0,
-        currentStage: 'applied',
-        salaryMin: null,
-        salaryMax: null,
-        remoteOption: "hybrid",
-        jobUrl: '',
-        notes: '',
+        company: initialJob?.company || '',
+        position: initialJob?.position || '',
+        location: initialJob?.location || '',
+        applicationDate: initialJob?.applicationDate || new Date().toISOString().split('T')[0],
+        interestLevel: initialJob?.interestLevel || 0,
+        currentStage: initialJob?.currentStage || 'applied',
+        salaryMin: initialJob?.salaryMin ?? null,
+        salaryMax: initialJob?.salaryMax ?? null,
+        remoteOption: initialJob?.remoteOption || "hybrid",
+        jobUrl: initialJob?.jobUrl || '',
+        notes: initialJob?.notes || '',
     });
+
+    useImperativeHandle(ref, () => ({
+        validateAndSubmit() {
+            if (formState.company && formState.position && formState.currentStage) {
+                onSubmit(formState);
+            }
+        }
+    }));
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
         const {name, value} = e.target;
@@ -82,43 +98,18 @@ const AddApplicationPage: React.FC<AddApplicationPageProps> = ({onGoBack, onSubm
         });
     };
 
-    const handleSubmit = () => {
-        if (formState.company && formState.position && formState.currentStage) {
-            onSubmit(formState as Omit<JobApplication, 'id' | 'isEdit'>);
-            onGoBack();
-        }
-    };
 
     return (
-        <Container sx={{py: 4}}>
-            <Box
-                sx={{
-                    maxWidth: {xs: '100%', md: 700},
-                    mx: 'auto',
-                    p: isMobile ? 2 : 4,
-                }}
-            >
-                <Button variant="text" startIcon={<ArrowBackIcon/>} onClick={onGoBack}>
-                    Back to Dashboard
-                </Button>
-            </Box>
+        <Container sx={{py: 4, paddingTop: 0, paddingBottom: 0}}>
             <Box
                 sx={{
                     maxWidth: {xs: '100%', md: 600},
                     mx: 'auto',
                     p: isMobile ? 2 : 4,
-                    borderRadius: 2,
                     boxShadow: 3,
                     bgcolor: 'background.paper',
                 }}
             >
-                <Typography variant="h4" fontWeight="bold" mb={2}>
-                    Add New Application
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{mb: 4}}>
-                    Fill out the form below to add a new job application to your tracker.
-                </Typography>
-
                 <Stack spacing={3} component="form">
                     <Stack direction={isMobile ? "column" : "row"} spacing={2}>
                         <TextField
@@ -215,7 +206,7 @@ const AddApplicationPage: React.FC<AddApplicationPageProps> = ({onGoBack, onSubm
                             />
                         </Stack>
                         <Stack direction="row" flexGrow={1}>
-                            <Stack alignItems="center" >
+                            <Stack alignItems="center">
                                 <Typography variant="body1" color="text.secondary">Interest Level</Typography>
                                 <Rating
                                     name="interestLevel"
@@ -261,14 +252,12 @@ const AddApplicationPage: React.FC<AddApplicationPageProps> = ({onGoBack, onSubm
                             />
                         </Box>
                     </Stack>
-                    <Button variant="contained" onClick={handleSubmit}>
-                        Add Application
-                    </Button>
+
                 </Stack>
 
             </Box>
         </Container>
     );
-};
+})
 
-export default AddApplicationPage;
+export default ApplicationForm;
