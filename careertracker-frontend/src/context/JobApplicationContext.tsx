@@ -14,7 +14,7 @@ type JobApplicationAction =
 interface JobApplicationContextType {
     jobApplications: JobApplication[];
     createJobApplication: (job: JobApplication) => void;
-    readJobApplication: (id: string) => void;
+    readJobApplication: (id: string) => JobApplication | undefined;
     updateJobApplication: (job: JobApplication) => void;
     deleteJobApplication: (id: string) => void;
 }
