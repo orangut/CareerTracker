@@ -14,6 +14,7 @@ type JobApplicationAction =
 interface JobApplicationContextType {
     jobApplications: JobApplication[];
     createJobApplication: (job: JobApplication) => void;
+    readJobApplication: (id: string) => void;
     updateJobApplication: (job: JobApplication) => void;
     deleteJobApplication: (id: string) => void;
 }
@@ -47,9 +48,10 @@ export const JobApplicationProvider = ({ children, initialJobApplications = [] }
     const createJobApplication = (jobApplication: JobApplication) => dispatch({ type: 'CREATE', payload: jobApplication });
     const updateJobApplication = (jobApplication: JobApplication) => dispatch({ type: 'UPDATE', payload: jobApplication });
     const deleteJobApplication = (id: string) => dispatch({ type: 'DELETE', payload: id });
+    const readJobApplication = (id: string) => state.jobApplications.find(job => job.id === id);
 
     return (
-        <JobApplicationContext.Provider value={{ jobApplications: state.jobApplications, createJobApplication, updateJobApplication, deleteJobApplication }}>
+        <JobApplicationContext.Provider value={{ jobApplications: state.jobApplications, createJobApplication, readJobApplication, updateJobApplication, deleteJobApplication }}>
             {children}
         </JobApplicationContext.Provider>
     );
