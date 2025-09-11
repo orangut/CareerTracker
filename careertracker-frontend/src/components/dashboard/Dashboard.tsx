@@ -1,22 +1,25 @@
 import React from 'react';
-import { Box, Button, Container, Grid, Typography } from '@mui/material';
+import {Box, Button, Container, Grid, Typography} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DashboardFilter from './DashboardFilter';
 import JobApplicationCard from './JobApplicationCard';
-import { type JobApplication } from "../../models/JobApplication";
+import {type JobApplication} from "../../models/JobApplication";
 import Metrics from "./Metrics.tsx";
-import { useJobApplications } from '../../context/JobApplicationContext';
+import {useJobApplications} from '../../context/JobApplicationContext';
+import {useNavigate} from "react-router-dom";
+
 
 const Dashboard = () => {
-    const { jobApplications } = useJobApplications();
+    const {jobApplications} = useJobApplications();
+    const navigate = useNavigate();
 
     const [filteredJobs, setFilteredJobs] = React.useState<JobApplication[]>(jobApplications);
 
     // const theme = useTheme();
     // const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     return (
-        <Box sx={{ py: 4, minHeight: '100vh', bgcolor: 'background.default' }}>
-            <Container maxWidth={false} sx={{ py: 4 }}>
+        <Box sx={{py: 4, minHeight: '100vh', bgcolor: 'background.default'}}>
+            <Container maxWidth={false} sx={{py: 4}}>
                 <Box
                     sx={{
                         display: 'flex',
@@ -31,12 +34,13 @@ const Dashboard = () => {
                     <Button
                         variant="contained"
                         color="primary"
-                        startIcon={<AddIcon />}
+                        startIcon={<AddIcon/>}
+                        onClick={() => navigate('/add')}
                     >
                         Add Application
                     </Button>
                 </Box>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                <Typography variant="body1" color="text.secondary" sx={{mb: 4}}>
                     Track and manage your job search progress
                 </Typography>
 
@@ -51,7 +55,7 @@ const Dashboard = () => {
                     {filteredJobs.length > 0 ? (
                         filteredJobs.map((job) => (
                             <Grid key={job.id}>
-                                <JobApplicationCard job={job} />
+                                <JobApplicationCard job={job}/>
                             </Grid>
                         ))
                     ) : (
