@@ -93,7 +93,7 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                     }}
                 >
                     <IconButton size="small">
-                        <EditIcon fontSize="small" onClick={() => (navigate(`/edit/${job.id}`))}/>
+                        <EditIcon fontSize="small" onClick={() => navigate(`/edit/${job.id}`)}/>
                     </IconButton>
                 </Box>
             )}

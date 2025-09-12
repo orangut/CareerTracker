@@ -31,10 +31,10 @@ const DEFAULT_JOB_APPLICATION_STATE: Omit<JobApplication, 'id' | 'isEdit'> = {
     applicationDate: new Date().toISOString().split('T')[0],
     interestLevel: 0,
     currentStage: 'applied',
-    salaryMin: null,
-    salaryMax: null,
+    salaryMin: undefined,
+    salaryMax: undefined,
     remoteOption: 'hybrid',
-    notes: '',
+    notes: undefined,
     jobUrl: '',
 };
 
@@ -111,7 +111,7 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
         const { name } = e.target;
         setFormState(prev => {
             const newState = { ...prev };
-            if (newState.salaryMin !== null && newState.salaryMax !== null) {
+            if (newState.salaryMin && newState.salaryMax ) {
                 if (name === 'salaryMin' && newState.salaryMin > newState.salaryMax) {
                     newState.salaryMax = newState.salaryMin;
                 } else if (name === 'salaryMax' && newState.salaryMax < newState.salaryMin) {

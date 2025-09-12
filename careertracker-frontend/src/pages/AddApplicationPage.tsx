@@ -13,7 +13,7 @@ const AddApplicationPage = () => {
         const newJob: JobApplication = {
             ...jobData,
             id: uuidv4(),
-            isEdit: false,
+            isEdit: true,
         };
 
         createJobApplication(newJob);
