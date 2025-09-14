@@ -3,7 +3,8 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import EditIcon from '@mui/icons-material/Edit';
-import type JobApplication from "../../models/JobApplication.ts";
+import {type JobApplication} from "../../models/JobApplication.ts";
+import {useNavigate} from "react-router-dom";
 
 interface JobApplicationCardProps {
     job: JobApplication;
@@ -53,6 +54,7 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
         'en-US',
         dateOptions
     );
+    const navigate = useNavigate();
 
     return (
         <Card
@@ -91,7 +93,7 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                     }}
                 >
                     <IconButton size="small">
-                        <EditIcon fontSize="small"/>
+                        <EditIcon fontSize="small" onClick={() => navigate(`/edit/${job.id}`)}/>
                     </IconButton>
                 </Box>
             )}
@@ -167,7 +169,7 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                 sx={{p: 3, pt: 0, display: 'flex', justifyContent: 'flex-start', pl: 2}}
             >
                 <Typography variant="h6" sx={{fontWeight: 'bold', fontSize: 14}}>
-                    {job.salaryRange ? job.salaryRange : '-'}
+                    {job?.salaryMin ? `${job.salaryMin.toString()}k$` : '?'} - {job?.salaryMax ? `${job.salaryMax}k$` : '?'}
                 </Typography>
             </Box>
         </Card>

@@ -25,10 +25,12 @@ export type JobApplication = {
     applicationDate: Date | string;
     interestLevel: AllInterestLevelsType;
     currentStage: AllStagesType;
-    salaryRange?: string;
+    salaryMin?: number;
+    salaryMax?: number;
     remoteOption: AllRemoteOptionsType;
     jobUrl: string;
     isEdit: boolean;
+    notes?: string[];
     stages?: string[];
 
 }

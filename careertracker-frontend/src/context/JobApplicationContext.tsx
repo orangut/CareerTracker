@@ -11,7 +11,7 @@ type JobApplicationAction =
     | { type: 'UPDATE'; payload: JobApplication }
     | { type: 'DELETE'; payload: string };
 
-interface JobApplicationContextType {
+export interface JobApplicationContextType {
     jobApplications: JobApplication[];
     createJobApplication: (job: JobApplication) => void;
     readJobApplication: (id: string) => JobApplication | undefined;
