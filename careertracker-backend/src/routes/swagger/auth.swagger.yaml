@@ -1,0 +1,70 @@
+# src/routes/swagger/auth.swagger.yaml
+
+tags:
+  - name: Auth
+    description: User authentication and registration
+
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: testuser
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Username and password are required
+        '409':
+          description: Username already exists
+
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Log in a user and get a JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: testuser
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Successful login, returns a JWT token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: The JWT for authentication
+        '400':
+          description: Invalid credentials
