@@ -22,7 +22,7 @@ const Header = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AccountCircleIcon />
                 <Typography variant="h6">
-                    Hello {user?.name}
+                    Hello {user?.username}
                 </Typography>
             </Box>
             <IconButton color="inherit">

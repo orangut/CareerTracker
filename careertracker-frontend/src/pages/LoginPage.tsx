@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Box, Button, TextField, Typography, Paper, ToggleButton, ToggleButtonGroup, Stack, IconButton, InputAdornment } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { register, signIn } from '../api/authService';
 
 const LoginPage = () => {
   const { user, setUser } = useUser();
@@ -23,16 +24,23 @@ const LoginPage = () => {
     }
   }, [user, navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (mode === 'signup' && password !== confirmPassword) {
       setErrorMsg('Passwords do not match');
       return;
     }
-    // Replace with real authentication logic
-    const signedInUser = { id: Date.now().toString(), name: username, notifications: ["Nobody likes you."] };
-    
-    setUser(signedInUser);
+    try {
+      const response = mode === 'login'
+        ? await signIn({ username, password })
+        : await register({ username, password });
+      const signedInUser = response.user;
+
+      setUser(signedInUser);
+    } catch (error: any) {
+      setErrorMsg(error || 'An error occurred. Please try again.');
+    }
   };
 
   return (
