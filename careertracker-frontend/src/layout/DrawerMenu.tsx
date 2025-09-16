@@ -7,6 +7,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
+import type { SvgIconComponent } from '@mui/icons-material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 
@@ -14,22 +15,8 @@ const HamburgerMenu = ({ open, onToggle }: { open: boolean; onToggle: (open: boo
 
   const menuItems = (
     <List sx={{ width: 250 }}>
-      <ListItem disablePadding>
-        <ListItemButton component={Link} to="/" onClick={() => onToggle(false)}>
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dashboard" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton component={Link} to="/notifaction" onClick={() => onToggle(false)}>
-          <ListItemIcon>
-            <NotificationsIcon />
-          </ListItemIcon>
-          <ListItemText primary="Notification" />
-        </ListItemButton>
-      </ListItem>
+      <HamburgerMenuItem text="Dashboard" path="/" icon={DashboardIcon} onClick={() => onToggle(false)} />
+      <HamburgerMenuItem text="Notification" path="/notifaction" icon={NotificationsIcon} onClick={() => onToggle(false)} />
     </List>
   );
 
@@ -49,4 +36,17 @@ const HamburgerMenu = ({ open, onToggle }: { open: boolean; onToggle: (open: boo
   );
 };
 
-export default HamburgerMenu;
+export default HamburgerMenu; 
+
+
+const HamburgerMenuItem = ({ text, icon: Icon, path, onClick }: { text: string; icon: SvgIconComponent; path: string; onClick: () => void }) => {
+  return (
+    <ListItem disablePadding>
+      <ListItemButton component={Link} to={path} onClick={onClick}>
+        <ListItemIcon>
+          <Icon />
+        </ListItemIcon>
+        <ListItemText primary={text} />
+      </ListItemButton>
+    </ListItem>);
+};
