@@ -1,0 +1,97 @@
+tags:
+  - name: Job Applications
+    description: Operations related to managing job applications
+
+paths:
+  /api/jobapplication:
+    post:
+      summary: Create a new job application
+      tags:
+        - Job Applications
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - company
+                - position
+                - applicationDate
+                - interestLevel
+                - currentStage
+                - remoteOption
+                - jobUrl
+              properties:
+                company:
+                  type: string
+                  example: 'Google'
+                position:
+                  type: string
+                  example: 'Software Engineer'
+                location:
+                  type: string
+                  example: 'Mountain View, CA'
+                applicationDate:
+                  type: string
+                  format: date
+                  example: '2025-09-15T00:00:00.000Z'
+                interestLevel:
+                  type: number
+                  example: 5
+                currentStage:
+                  type: string
+                  enum:
+                    - applied
+                    - phone_screen
+                    - technical_interview
+                    - final_interview
+                    - offer
+                    - rejected
+                    - withdrawn
+                  example: 'applied'
+                salaryMin:
+                  type: number
+                  example: 120000
+                salaryMax:
+                  type: number
+                  example: 150000
+                remoteOption:
+                  type: string
+                  enum:
+                    - remote
+                    - hybrid
+                    - onsite
+                  example: 'remote'
+                jobUrl:
+                  type: string
+                  example: 'https://careers.google.com/jobs/...'
+                isEdit:
+                  type: boolean
+                  example: false
+                notes:
+                  type: array
+                  items:
+                    type: string
+                  example: ['Initial application submitted.', 'A recruiter reached out.']
+                stages:
+                  type: array
+                  items:
+                    type: string
+                  example: ['applied']
+      responses:
+        '201':
+          description: Job application created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        '400':
+          description: Bad request, data validation failed
+        '500':
+          description: Internal server error

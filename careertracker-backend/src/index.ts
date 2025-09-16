@@ -1,6 +1,4 @@
-// src/index.ts
-
-import express, { Request, Response } from 'express';
+import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -13,7 +11,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 
 // Import your custom routes
 import authRoutes from './routes/auth';
-// import jobApplicationRoutes from './routes/jobApplications';
+import jobApplicationRoutes from './routes/jobApplication';
 
 // Import your custom middleware
 import authenticateToken from './middleware/authenticateToken';
@@ -39,6 +37,15 @@ const swaggerOptions = {
                 url: 'http://localhost:3000',
             },
         ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                },
+            },
+        },
     },
     // Fix: Use __dirname to build a path relative to the current file (index.ts)
     apis: [
@@ -60,12 +67,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/auth', authRoutes);
 
 // Protected routes (require a JWT token)
-// app.use('/api/jobapplications', authenticateToken, jobApplicationRoutes);
+app.use('/api/jobapplication', authenticateToken, jobApplicationRoutes);
 
 // --- Database Sync and Server Start ---
 
 // Sync all models with the database and start the server
-sequelize.sync({ force: false })
+sequelize.sync({force: false})
     .then(() => {
         console.log('Database synchronized');
         app.listen(PORT, () => {

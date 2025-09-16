@@ -8,10 +8,10 @@ import User from '../models/user'; // Import the User model
 
 dotenv.config();
 
-const router = express.Router();
+const authRoutes = express.Router();
 
 // Route for user registration
-router.post('/register', async (req: Request, res: Response) => {
+authRoutes.post('/register', async (req: Request, res: Response) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -37,7 +37,7 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // Route for user login
-router.post('/login', async (req: Request, res: Response) => {
+authRoutes.post('/login', async (req: Request, res: Response) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -72,4 +72,4 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 });
 
-export default router;
+export default authRoutes;
