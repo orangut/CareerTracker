@@ -4,9 +4,10 @@ import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import { useUser } from '../context/UserContext';
 
 const Header = () => {
-    const { username, notificationCount } = {username: "John Doe", notificationCount: 5}; // Example user, replace with actual user context
+    const {user} = useUser();
     return (
         <Box
             sx={{
@@ -21,11 +22,11 @@ const Header = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AccountCircleIcon />
                 <Typography variant="h6">
-                    Hello {username}
+                    Hello {user?.name}
                 </Typography>
             </Box>
             <IconButton color="inherit">
-                <Badge badgeContent={notificationCount} color="error">
+                <Badge badgeContent={user?.notifications?.length} color="error">
                     <NotificationsIcon />
                 </Badge>
             </IconButton>
