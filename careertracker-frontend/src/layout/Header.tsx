@@ -1,4 +1,3 @@
-import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -6,7 +5,8 @@ import Badge from '@mui/material/Badge';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 
-const Header = ({ username, notificationCount }: { username: string; notificationCount: number }) => {
+const Header = () => {
+    const { username, notificationCount } = {username: "John Doe", notificationCount: 5}; // Example user, replace with actual user context
     return (
         <Box
             sx={{

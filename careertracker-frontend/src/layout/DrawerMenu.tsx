@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
@@ -12,15 +11,11 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 
 const HamburgerMenu = ({ open, onToggle }: { open: boolean; onToggle: (open: boolean) => void }) => {
-    
-  const toggleDrawer = (newOpen: boolean) => () => {
-    onToggle(newOpen);
-  };
 
   const menuItems = (
     <List sx={{ width: 250 }}>
       <ListItem disablePadding>
-        <ListItemButton component={Link} to="/" onClick={toggleDrawer(false)}>
+        <ListItemButton component={Link} to="/" onClick={() => onToggle(false)}>
           <ListItemIcon>
             <DashboardIcon />
           </ListItemIcon>
@@ -28,7 +23,7 @@ const HamburgerMenu = ({ open, onToggle }: { open: boolean; onToggle: (open: boo
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
-        <ListItemButton component={Link} to="/notifaction" onClick={toggleDrawer(false)}>
+        <ListItemButton component={Link} to="/notifaction" onClick={() => onToggle(false)}>
           <ListItemIcon>
             <NotificationsIcon />
           </ListItemIcon>
@@ -40,13 +35,13 @@ const HamburgerMenu = ({ open, onToggle }: { open: boolean; onToggle: (open: boo
 
   return (
     <div>
-      <Button onClick={toggleDrawer(true)} sx={{ position: 'fixed', top: 25, left: 16, zIndex: 1200 }}>
+      <Button onClick={() => onToggle(true)} sx={{ position: 'fixed', top: 25, left: 16, zIndex: 1200 }}>
         <MenuIcon />
       </Button>
       <Drawer
         anchor="left"
         open={open}
-        onClose={toggleDrawer(false)}
+        onClose={() => onToggle(false)}
       >
         {menuItems}
       </Drawer>
