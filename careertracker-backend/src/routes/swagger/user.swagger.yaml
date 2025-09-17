@@ -1,0 +1,33 @@
+tags:
+  - name: User
+    description: Operations related to the authenticated user
+
+paths:
+  /api/user/me:
+    get:
+      summary: Get the authenticated user's profile
+      description: Retrieves the ID and username of the user authenticated via the HttpOnly cookie.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+                    description: The user's unique ID.
+                    example: 1
+                  username:
+                    type: string
+                    description: The user's username.
+                    example: 'johndoe'
+        '401':
+          description: Unauthorized - The provided token is missing or invalid.
+        '500':
+          description: Internal server error

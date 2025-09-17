@@ -2,8 +2,8 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/sequelize';
+import User from './user'; // Import the User model
 
-// Extracted constants for ENUM types to improve reusability and readability
 const allStages = [
     'applied',
     'phone_screen',
@@ -16,12 +16,8 @@ const allStages = [
 
 const allRemoteOptions = ['remote', 'hybrid', 'onsite'] as const;
 
-// Define the attributes that can be created (excluding id, as it's auto-generated)
-interface JobApplicationCreationAttributes extends Optional<JobApplicationAttributes, 'id'> {}
-
-// Define the interface for the JobApplication model attributes
 export interface JobApplicationAttributes {
-    id: string;
+    id: number;
     company: string;
     position: string;
     location: string;
@@ -32,14 +28,16 @@ export interface JobApplicationAttributes {
     salaryMax?: number;
     remoteOption: typeof allRemoteOptions[number];
     jobUrl: string;
-    isEdit: boolean; // Added isEdit
+    isEdit: boolean;
     notes?: string[];
     stages?: string[];
+    userId: number;
 }
 
-// Create the JobApplication model class
+interface JobApplicationCreationAttributes extends Optional<JobApplicationAttributes, 'id'> {}
+
 class JobApplication extends Model<JobApplicationAttributes, JobApplicationCreationAttributes> implements JobApplicationAttributes {
-    public id!: string;
+    public id!: number;
     public company!: string;
     public position!: string;
     public location!: string;
@@ -53,14 +51,13 @@ class JobApplication extends Model<JobApplicationAttributes, JobApplicationCreat
     public isEdit!: boolean;
     public notes?: string[];
     public stages?: string[];
+    public userId!: number;
 }
 
-// Initialize the model with column definitions
 JobApplication.init({
     id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        allowNull: false,
+        type: DataTypes.INTEGER, // Corrected to INTEGER
+        autoIncrement: true,
         primaryKey: true,
     },
     company: {
@@ -112,18 +109,29 @@ JobApplication.init({
         defaultValue: false,
     },
     notes: {
-        type: DataTypes.JSON, // Stores an array of strings as a JSON array
+        type: DataTypes.JSON,
         allowNull: true,
     },
     stages: {
-        type: DataTypes.JSON, // Stores an array of strings as a JSON array
+        type: DataTypes.JSON,
         allowNull: true,
     },
+    userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: User,
+            key: 'id'
+        }
+    }
 }, {
     sequelize,
     modelName: 'JobApplication',
     tableName: 'job_applications',
-    timestamps: true, // Adds createdAt and updatedAt columns
+    timestamps: true,
 });
+
+// Define the association
+JobApplication.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 export default JobApplication;

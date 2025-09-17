@@ -32,5 +32,4 @@ export type JobApplication = {
     isEdit: boolean;
     notes?: string[];
     stages?: string[];
-
 }

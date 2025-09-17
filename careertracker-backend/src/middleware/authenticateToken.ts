@@ -2,18 +2,21 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
 
-dotenv.config();
+interface JwtPayload {
+    userId: number;
+}
 
-// Extend the Express Request interface to include a user property
 interface AuthenticatedRequest extends Request {
-    user?: string | jwt.JwtPayload;
+    userId?: number;
 }
 
 const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    // Get the token directly from the cookie
+    const token = req.cookies.token;
+
+    console.log('token', token);
+
 
     if (token == null) {
         return res.status(401).json({ error: 'Token not provided' });
@@ -26,16 +29,20 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
         return res.status(500).json({ error: 'Server configuration error.' });
     }
 
-    jwt.verify(token, jwtSecret, (error, user) => {
-        if (error) {
-            // Token is invalid, expired, or tampered with
-            return res.status(403).json({ error: 'Invalid or expired token.' });
+    try {
+        const user = jwt.verify(token, jwtSecret) as JwtPayload;
+
+        if (typeof user === 'object' && user.userId) {
+            req.userId = user.userId;
+            next();
+        } else {
+            return res.status(403).json({ error: 'Invalid token payload.' });
         }
 
-        // If the token is valid, attach the decoded payload to the request
-        req.user = user;
-        next(); // Proceed to the next middleware or route handler
-    });
+    } catch (error: any) {
+        // Token is invalid, expired, or tampered with
+        return res.status(403).json({ error: 'Invalid or expired token.' });
+    }
 };
 
 export default authenticateToken;
