@@ -279,6 +279,7 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
                         value={formState.jobUrl}
                         onChange={handleChange}
                         fullWidth
+                        required
                     />
                     <Stack>
                         <Box sx={{ display: 'block', width: '100%' }}>

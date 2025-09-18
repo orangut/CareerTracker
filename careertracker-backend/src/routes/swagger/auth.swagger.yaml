@@ -1,5 +1,3 @@
-# src/routes/swagger/auth.swagger.yaml
-
 tags:
   - name: Auth
     description: User authentication and registration

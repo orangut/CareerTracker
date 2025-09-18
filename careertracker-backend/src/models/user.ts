@@ -1,9 +1,27 @@
 // src/models/user.ts
 
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/sequelize'; // Assume you have a sequelize connection config file
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/sequelize';
 
-const User = sequelize.define('User', {
+// Define the interface for the User model attributes
+export interface UserAttributes {
+    id: number;
+    username: string;
+    password?: string; // Password is optional for some operations (like login)
+}
+
+// Define the attributes that can be created (excluding id)
+interface UserCreationAttributes extends Optional<UserAttributes, 'id'> {}
+
+// Create the User model class
+class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+    public id!: number;
+    public username!: string;
+    public password!: string;
+}
+
+// Initialize the model with column definitions
+User.init({
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -17,7 +35,12 @@ const User = sequelize.define('User', {
     password: {
         type: DataTypes.STRING,
         allowNull: false,
-    }
+    },
+}, {
+    sequelize,
+    modelName: 'User',
+    tableName: 'users',
+    timestamps: true,
 });
 
 export default User;
