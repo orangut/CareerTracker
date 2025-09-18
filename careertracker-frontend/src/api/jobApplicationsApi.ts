@@ -1,7 +1,7 @@
 import axiosClient from './axiosClient';
 import { type JobApplication } from '../models/JobApplication';
 
-const BASE_URL = "/job-applications"
+const BASE_URL = "/job-application"
 
 export const createJobApplication = async (applicationData: Omit<JobApplication, 'id'>): Promise<JobApplication> => {
     const response = await axiosClient.post<JobApplication>(BASE_URL, applicationData);

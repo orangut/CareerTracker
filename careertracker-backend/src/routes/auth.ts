@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import User from '../models/user'; // Import the User model
 
 dotenv.config();
+const tokenExpirationTimeInHours: number = parseInt(process.env.tokenExpirationTimeInHours || '1', 10);
 
 const authRouter = express.Router();
 
@@ -18,19 +19,29 @@ authRouter.post('/register', async (req: Request, res: Response) => {
 
     try {
         // Use Sequelize's findOne() method to check for existing username
-        const user = await User.findOne({where: {username}});
-        if (user) {
+        const existingUser = await User.findOne({where: {username}});
+        if (existingUser) {
             return res.status(409).send('Username already exists.');
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         // Use the Sequelize create() method to insert a new user
-        await User.create({
+        const user = await User.create({
             username,
             password: hashedPassword
         });
 
-        res.status(201).send('User registered successfully.');
+        const token = jwt.sign({userId: user.id}, process.env.JWT_SECRET || 'your_jwt_secret', {expiresIn: `${tokenExpirationTimeInHours}h`});
+
+        // Send the token as an HttpOnly cookie
+        res.cookie('token', token, {
+            httpOnly: true, // Prevents client-side JS from accessing the cookie
+            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+            sameSite: 'strict', // Protects against CSRF attacks
+            maxAge: tokenExpirationTimeInHours * 3600000 // tokenExpirationTimeInHours in milliseconds
+        });
+
+        res.status(201).json({token});
     } catch (error: any) {
         // Handle a Sequelize unique constraint error if username already exists
         if (error.name === 'SequelizeUniqueConstraintError') {
@@ -44,8 +55,6 @@ authRouter.post('/register', async (req: Request, res: Response) => {
 // Route for user login
 authRouter.post('/login', async (req: Request, res: Response) => {
     const {username, password} = req.body;
-
-    const tokenExpirationTimeInHours: number = parseInt(process.env.tokenExpirationTimeInHours || '1', 10);
 
     if (!username || !password) {
         return res.status(400).send('Username and password are required.');
