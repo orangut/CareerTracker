@@ -11,9 +11,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
 // Import your custom routes
-import authRoutes from './routes/auth';
-import jobApplicationRoutes from './routes/jobApplication';
-import userRoutes from './routes/user';
+import apiRouter from './routes';
 
 // Import your custom middleware
 import authenticateToken from './middleware/authenticateToken';
@@ -80,13 +78,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 // --- API Routes ---
-
-// Public routes (for authentication)
-app.use('/api/auth', authRoutes);
-
-// Protected routes (require a JWT token)
-app.use('/api/jobapplications', authenticateToken, jobApplicationRoutes);
-app.use('/api/user', authenticateToken, userRoutes);
+app.use('/api', apiRouter);
 
 // --- Database Sync and Server Start ---
 

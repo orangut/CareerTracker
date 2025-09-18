@@ -1,21 +1,14 @@
 import express, { Request, Response } from 'express';
 import JobApplication from '../models/jobApplication';
+import { AuthenticatedRequest } from '../interfaces/authenticatedRequest';
 
-// Extend the Request object to include the userId from the JWT payload
-interface AuthenticatedRequest extends Request {
-    userId?: number;
-}
 
-const jobApplicationRoutes = express.Router();
+const jobApplicationRouter = express.Router();
 
 // Route to get all job applications for the authenticated user
-jobApplicationRoutes.get('/', async (req: AuthenticatedRequest, res: Response) => {
+jobApplicationRouter.get('/', async (req: AuthenticatedRequest, res: Response) => {
     try {
         const userId = req.userId;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
 
         const jobApplications = await JobApplication.findAll({
             where: {
@@ -31,14 +24,9 @@ jobApplicationRoutes.get('/', async (req: AuthenticatedRequest, res: Response) =
 });
 
 // Route to create a new job application
-jobApplicationRoutes.post('/', async (req: AuthenticatedRequest, res: Response) => {
+jobApplicationRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
     try {
         const userId = req.userId;
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
-
-        console.log(userId);
 
         // Ensure the application is associated with the authenticated user
         const newApplication = await JobApplication.create({ ...req.body, userId });
@@ -50,4 +38,4 @@ jobApplicationRoutes.post('/', async (req: AuthenticatedRequest, res: Response) 
     }
 });
 
-export default jobApplicationRoutes;
+export default jobApplicationRouter;

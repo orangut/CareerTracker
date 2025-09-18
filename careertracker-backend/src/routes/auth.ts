@@ -6,10 +6,10 @@ import User from '../models/user'; // Import the User model
 
 dotenv.config();
 
-const authRoutes = express.Router();
+const authRouter = express.Router();
 
 // Route for user registration
-authRoutes.post('/register', async (req: Request, res: Response) => {
+authRouter.post('/register', async (req: Request, res: Response) => {
     const {username, password} = req.body;
 
     if (!username || !password) {
@@ -17,6 +17,12 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
     }
 
     try {
+        // Use Sequelize's findOne() method to check for existing username
+        const user = await User.findOne({where: {username}});
+        if (user) {
+            return res.status(409).send('Username already exists.');
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         // Use the Sequelize create() method to insert a new user
         await User.create({
@@ -36,7 +42,7 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
 });
 
 // Route for user login
-authRoutes.post('/login', async (req: Request, res: Response) => {
+authRouter.post('/login', async (req: Request, res: Response) => {
     const {username, password} = req.body;
 
     const tokenExpirationTimeInHours: number = parseInt(process.env.tokenExpirationTimeInHours || '1', 10);
@@ -78,4 +84,4 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
     }
 });
 
-export default authRoutes;
+export default authRouter;

@@ -1,15 +1,13 @@
-import express, { Request, Response } from 'express';
-import authenticateToken from '../middleware/authenticateToken'; // Your existing middleware
+import express, { Response } from 'express';
 import User from '../models/user';
+import { AuthenticatedRequest } from '../interfaces/authenticatedRequest';
 
-const router = express.Router();
+const userRouter = express.Router();
 
-router.get('/me', authenticateToken, async (req: Request, res: Response) => {
+userRouter.get('/me', async (req: AuthenticatedRequest, res: Response) => {
     try {
-        // The authenticateToken middleware adds the user ID to the request object
-        const userId = (req as any).userId;
 
-        const user = await User.findByPk(userId);
+        const user = await User.findByPk(req.userId);
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -27,4 +25,4 @@ router.get('/me', authenticateToken, async (req: Request, res: Response) => {
     }
 });
 
-export default router;
+export default userRouter;
