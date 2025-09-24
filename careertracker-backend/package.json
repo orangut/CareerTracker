@@ -5,16 +5,18 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "build": "tsc && cpx \"src/routes/swagger/*\" \"dist/routes/swagger\"",
-    "dev": "nodemon --exec ts-node src/index.ts"
+    "build": "tsc --project ./tsconfig.json && cpx \"src/routes/swagger/*\" \"dist/routes/swagger\"",
+    "dev": "nodemon --exec ts-node --project ./tsconfig.json src/index.ts"
   },
   "keywords": [],
   "author": "Your Name",
   "license": "ISC",
   "dependencies": {
+    "@monorepo/db-api-client": "file:../db-api-client",
     "@types/cookie-parser": "^1.4.9",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
+    "bullmq": "^5.58.7",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "cpx": "^1.5.0",

@@ -3,18 +3,12 @@ import dotenv from 'dotenv';
 import path from 'path';
 import cors from 'cors';
 
-// Import Sequelize and the database configuration
-import sequelize from './config/sequelize';
-
 // Import Swagger libraries
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
 // Import your custom routes
 import apiRouter from './routes';
-
-// Import your custom middleware
-import authenticateToken from './middleware/authenticateToken';
 
 // Import cookie middleware
 import cookieParser from 'cookie-parser';
@@ -79,18 +73,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // --- API Routes ---
 app.use('/api', apiRouter);
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
+})
 
-// --- Database Sync and Server Start ---
-
-// Use sequelize.sync() to create tables if they don't exist
-sequelize.sync()
-    .then(() => {
-        console.log('Database and tables synced!');
-        // Now start the server
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
-    })
-    .catch((error) => {
-        console.error('Failed to sync database:', error);
-    });

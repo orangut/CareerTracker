@@ -3,7 +3,7 @@ tags:
     description: API for managing job application records
 
 paths:
-  /api/jobapplications:
+  /api/job-applications:
     get:
       summary: Get all job applications for the authenticated user
       description: Retrieves a list of all job application records that belong to the user authenticated via the HttpOnly cookie.
@@ -173,8 +173,3 @@ components:
           items:
             type: string
           example: ["Initial conversation with recruiter."]
-        stages:
-          type: array
-          items:
-            type: string
-          example: ["Applied online", "Recruiter call scheduled"]

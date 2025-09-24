@@ -2,7 +2,8 @@ import express, {Request, Response} from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import User from '../models/user'; // Import the User model
+
+import {User, dbClient} from "../config/dbClient";
 
 dotenv.config();
 const tokenExpirationTimeInHours: number = parseInt(process.env.tokenExpirationTimeInHours || '1', 10);
@@ -18,20 +19,17 @@ authRouter.post('/register', async (req: Request, res: Response) => {
     }
 
     try {
-        // Use Sequelize's findOne() method to check for existing username
-        const existingUser = await User.findOne({where: {username}});
+        // Check if user already exists
+        const existingUser = await dbClient.auth.isUserExists(username);
         if (existingUser) {
             return res.status(409).send('Username already exists.');
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        // Use the Sequelize create() method to insert a new user
-        const user = await User.create({
-            username,
-            password: hashedPassword
-        });
+        // Use dbApiClient to send the request to the DB API
+        const newUser: User | null = await dbClient.auth.register(username, hashedPassword);
 
-        const token = jwt.sign({userId: user.id}, process.env.JWT_SECRET || 'your_jwt_secret', {expiresIn: `${tokenExpirationTimeInHours}h`});
+        const token = jwt.sign({userId: newUser?._id}, process.env.JWT_SECRET || 'your_jwt_secret', {expiresIn: `${tokenExpirationTimeInHours}h`});
 
         // Send the token as an HttpOnly cookie
         res.cookie('token', token, {
@@ -61,22 +59,14 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     }
 
     try {
-        // Use Sequelize's findOne() method to find a user
-        const user = await User.findOne({where: {username}});
+        // Use dbApiClient to authenticate the user on the DB API
+        const userId = await dbClient.auth.login(username, password);
 
-        // If no user is found OR the user object doesn't have a password
-        if (!user || !user.password) {
+        if (!userId) {
             return res.status(400).json({error: 'Invalid credentials'});
         }
 
-        // Compare the submitted password with the hashed password from the database
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-
-        if (!isPasswordValid) {
-            return res.status(400).json({error: 'Invalid credentials'});
-        }
-
-        const token = jwt.sign({userId: user.id}, process.env.JWT_SECRET || 'your_jwt_secret', {expiresIn: `${tokenExpirationTimeInHours}h`});
+        const token = jwt.sign({userId: userId}, process.env.JWT_SECRET || 'your_jwt_secret', {expiresIn: `${tokenExpirationTimeInHours}h`});
 
         // Send the token as an HttpOnly cookie
         res.cookie('token', token, {

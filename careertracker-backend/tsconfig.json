@@ -10,6 +10,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
+    "baseUrl": "../../",
+    "paths": {
+      "@monorepo/db-api-client": ["packages/db-api-client/src"]
+    }
   },
   "include": [
     "src/**/*",
