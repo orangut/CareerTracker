@@ -1,0 +1,146 @@
+openapi: 3.0.0
+info:
+  title: Stage API
+  version: 1.0.0
+  description: API endpoints for managing stages of job applications
+
+tags:
+  - name: Stage
+    description: Stage management
+
+paths:
+  /api/stages:
+    post:
+      tags:
+        - Stage
+      summary: Create a new stage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+        '500':
+          description: Failed to create stage
+
+  /api/stages/job/{jobId}:
+    get:
+      tags:
+        - Stage
+      summary: Get all stages for a job application
+      parameters:
+        - in: path
+          name: jobId
+          schema:
+            type: string
+          required: true
+          description: Job application ID
+      responses:
+        '200':
+          description: List of stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stage'
+        '500':
+          description: Failed to fetch stages
+
+  /api/stages/{id}:
+    put:
+      tags:
+        - Stage
+      summary: Update a stage
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Stage ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageInput'
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Not found
+        '500':
+          description: Failed to update stage
+
+    delete:
+      tags:
+        - Stage
+      summary: Delete a stage
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Stage ID
+      responses:
+        '200':
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Not found
+        '500':
+          description: Failed to delete stage
+
+components:
+  schemas:
+    StageInput:
+      type: object
+      properties:
+        jobApplicationId:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        # ...add other fields as needed...
+      required:
+        - jobApplicationId
+        - startedAt
+
+    Stage:
+      allOf:
+        - $ref: '#/components/schemas/StageInput'
+        - type: object
+          properties:
+            _id:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time

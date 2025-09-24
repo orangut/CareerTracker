@@ -1,0 +1,230 @@
+openapi: 3.0.0
+info:
+  title: Job Application API
+  version: 1.0.0
+  description: API endpoints for managing job applications
+
+tags:
+  - name: JobApplication
+    description: Job application management
+
+paths:
+  /api/job-applications:
+    post:
+      tags:
+        - JobApplication
+      summary: Create a new job application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobApplicationInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+        '400':
+          description: Invalid userId or request
+        '500':
+          description: Failed to create job application
+
+    get:
+      tags:
+        - JobApplication
+      summary: Get all job applications for a user
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID (MongoDB ObjectId)
+      responses:
+        '200':
+          description: List of job applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobApplicationWithStages'
+        '500':
+          description: Failed to fetch job applications
+
+  /api/job-applications/{id}:
+    get:
+      tags:
+        - JobApplication
+      summary: Get a single job application by ID
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Job application ID
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID (MongoDB ObjectId)
+      responses:
+        '200':
+          description: Job application with stages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplicationWithStages'
+        '404':
+          description: Not found
+        '500':
+          description: Failed to fetch job application
+
+    put:
+      tags:
+        - JobApplication
+      summary: Update a job application
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Job application ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobApplicationInput'
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Not found or unauthorized
+        '500':
+          description: Failed to update job application
+
+    delete:
+      tags:
+        - JobApplication
+      summary: Delete a job application
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Job application ID
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID (MongoDB ObjectId)
+      responses:
+        '200':
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Not found or unauthorized
+        '500':
+          description: Failed to delete job application
+
+components:
+  schemas:
+    JobApplicationInput:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: User ID (MongoDB ObjectId)
+        company:
+          type: string
+        position:
+          type: string
+        location:
+          type: string
+        applicationDate:
+          type: string
+          format: date-time
+        interestLevel:
+          type: integer
+          minimum: 0
+          maximum: 10
+        salaryMin:
+          type: number
+        salaryMax:
+          type: number
+        remoteOption:
+          type: string
+          enum: [remote, hybrid, onsite]
+        jobUrl:
+          type: string
+          format: uri
+        isEdit:
+          type: boolean
+        notes:
+          type: array
+          items:
+            type: string
+      required:
+        - userId
+        - company
+        - position
+        - location
+        - applicationDate
+        - interestLevel
+        - remoteOption
+        - jobUrl
+        - isEdit
+
+    Stage:
+      type: object
+      properties:
+        jobApplicationId:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+
+    JobApplicationWithStages:
+      allOf:
+        - $ref: '#/components/schemas/JobApplicationInput'
+        - type: object
+          properties:
+            _id:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            allStages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Stage'
+            lastStage:
+              $ref: '#/components/schemas/Stage'
