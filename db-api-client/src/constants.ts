@@ -1,0 +1,5 @@
+export const BASE_PATH_JOB_APPLICATION = '/job-application'
+export const BASE_PATH_NOTIFICATION_RULES = '/notification-rule'
+export const BASE_PATH_STAGES = '/stage'
+export const BASE_PATH_USERS = '/user'
+export const BASE_PATH_AUTH = '/auth'
