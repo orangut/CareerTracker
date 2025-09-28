@@ -1,4 +1,6 @@
 import axios, {AxiosInstance} from 'axios';
+import {Logger} from 'winston';
+
 import {
     createJobApplication,
     deleteJobApplication,
@@ -6,7 +8,14 @@ import {
     getJobApplicationById,
     updateJobApplication
 } from './jobApplication';
-import {createStage, deleteStage, getAllStages, getStageById, updateStage} from './stage';
+import {
+    createStage,
+    deleteStage,
+    getAllStages,
+    getAllStagesByJobApplicationId,
+    getStageById,
+    updateStage
+} from './stage';
 import {
     createNotificationRule,
     deleteNotificationRule,
@@ -14,15 +23,23 @@ import {
     getNotificationRuleById,
     updateNotificationRule
 } from './notificationRule';
+import {createUserProfile, deleteUserProfile, getByUsername, getUserById, getUsers, updateUserProfile} from './user';
 import {
-    authenticateUser,
-    createUserProfile,
-    deleteUserProfile,
-    getByUsername,
-    getUserById, getUsers,
-    updateUserProfile
-} from './user';
-import {IsLoginSuccess, IsUserExists, JobApplication, NotificationRule, Stage, User} from './interfaces';
+    Filters,
+    JobApplication,
+    JobApplicationCreateData,
+    JobApplicationPopulatedStage,
+    JobApplicationUpdateData,
+    NotificationRule,
+    NotificationRuleCreateData,
+    NotificationRuleUpdateData,
+    Stage,
+    StageCreateData,
+    StageUpdateData,
+    User,
+    UserCreateData,
+    UserUpdateData
+} from './interfaces';
 import {isUserExists, login, register} from "./auth";
 
 
@@ -31,9 +48,11 @@ const handleApiRequest = async <T>(request: Promise<T>): Promise<T | null> => {
     try {
         return await request;
     } catch (error: any) {
+        // Handle 404 (Not Found) specifically, treating it as a successful null return
         if (error.response?.status === 404) {
             return null;
         }
+        // Log other errors and re-throw them
         console.error('API request failed:', error.response?.data || error.message);
         throw error;
     }
@@ -41,11 +60,12 @@ const handleApiRequest = async <T>(request: Promise<T>): Promise<T | null> => {
 
 /**
  * The core client object that provides access to all API functions.
- * Functions are wrapped to automatically pass the apiClient instance.
+ * Functions are wrapped to automatically pass the apiClient instance and handle error wrapping.
  */
-const dbApiClient = (db_api_url?: string) => {
+const dbApiClient = (db_api_url: string, optionalLogger: Logger) => {
     // Initialize the Axios client with shared configuration
-    const DB_API_URL = db_api_url || process.env.DB_API_URL;
+    const DB_API_URL = db_api_url
+    const logger = optionalLogger
 
     if (!DB_API_URL) {
         throw new Error("DB_API_URL must be provided (argument or env variable).");
@@ -58,88 +78,88 @@ const dbApiClient = (db_api_url?: string) => {
 
     return {
         jobApplications: {
-            getAll: async (userId: string): Promise<JobApplication[] | null> => handleApiRequest(
-                getAllJobApplications(apiClient)(userId)
+            getAll: async (callingUserId: string, filters: Filters<JobApplication> = {}): Promise<JobApplicationPopulatedStage[] | null> => handleApiRequest(
+                getAllJobApplications(apiClient, logger)(callingUserId, filters)
             ),
-            getById: async (userId: string, applicationId: string): Promise<JobApplication | null> => handleApiRequest(
-                getJobApplicationById(apiClient)(userId, applicationId)
+            getById: async (callingUserId: string, applicationId: string, filters: Filters<JobApplication> = {}): Promise<JobApplicationPopulatedStage | null> => handleApiRequest(
+                getJobApplicationById(apiClient, logger)(callingUserId, applicationId, filters)
             ),
-            create: async (userId: string, appData: any): Promise<JobApplication | null> => handleApiRequest(
-                createJobApplication(apiClient)(userId, appData)
+            create: async (callingUserId: string, appData: JobApplicationCreateData): Promise<JobApplication | null> => handleApiRequest(
+                createJobApplication(apiClient, logger)(callingUserId, appData)
             ),
-            update: async (userId: string, applicationId: string, updateData: any): Promise<JobApplication | null> => handleApiRequest(
-                updateJobApplication(apiClient)(userId, applicationId, updateData)
+            update: async (callingUserId: string, applicationId: string, updateData: JobApplicationUpdateData, filters: Filters<JobApplication> = {}): Promise<JobApplicationPopulatedStage | null> => handleApiRequest(
+                updateJobApplication(apiClient, logger)(callingUserId, applicationId, updateData, filters)
             ),
-            delete: async (userId: string, applicationId: string): Promise<void | null> => handleApiRequest(
-                deleteJobApplication(apiClient)(userId, applicationId)
+            delete: async (callingUserId: string, applicationId: string, filters: Filters<JobApplication> = {}): Promise<void | null> => handleApiRequest(
+                deleteJobApplication(apiClient, logger)(applicationId, callingUserId, filters)
             ),
         },
         stages: {
-            getAll: async (jobApplicationId: string): Promise<Stage[] | null> => handleApiRequest(
-                getAllStages(apiClient)(jobApplicationId)
+            getAll: async (callingUserId: string, filters: Filters<Stage> = {}): Promise<Stage[] | null> => handleApiRequest(
+                getAllStages(apiClient, logger)(callingUserId, filters)
             ),
-            getById: async (stageId: string): Promise<Stage | null> => handleApiRequest(
-                getStageById(apiClient)(stageId)
+            getAllByJobApplicationId: async (callingUserId: string, jobApplicationId: string, filters: Filters<Stage> = {}): Promise<Stage[] | null> => handleApiRequest(
+                getAllStagesByJobApplicationId(apiClient, logger)(callingUserId, jobApplicationId, filters)
             ),
-            create: async (stageData: any): Promise<Stage | null> => handleApiRequest(
-                createStage(apiClient)(stageData)
+            getById: async (callingUserId: string, stageId: string, filters: Filters<Stage> = {}): Promise<Stage | null> => handleApiRequest(
+                getStageById(apiClient, logger)(callingUserId, stageId, filters)
             ),
-            update: async (stageId: string, updateData: any): Promise<Stage | null> => handleApiRequest(
-                updateStage(apiClient)(stageId, updateData)
+            create: async (callingUserId: string, stageData: StageCreateData): Promise<Stage | null> => handleApiRequest(
+                createStage(apiClient, logger)(callingUserId, stageData)
             ),
-            delete: async (stageId: string): Promise<void | null> => handleApiRequest(
-                deleteStage(apiClient)(stageId)
+            update: async (callingUserId: string, stageId: string, updateData: StageUpdateData, filters: Filters<Stage> = {}): Promise<Stage | null> => handleApiRequest(
+                updateStage(apiClient, logger)(callingUserId, stageId, updateData, filters)
+            ),
+            delete: async (callingUserId: string, stageId: string, filters: Filters<Stage> = {}): Promise<void | null> => handleApiRequest(
+                deleteStage(apiClient, logger)(callingUserId, stageId, filters)
             ),
         },
         notificationRules: {
-            getAll: async (userId: string): Promise<NotificationRule[] | null> => handleApiRequest(
-                getAllNotificationRules(apiClient)(userId)
+            getAll: async (callingUserId: string, filters: Filters<NotificationRule> = {}): Promise<NotificationRule[] | null> => handleApiRequest(
+                getAllNotificationRules(apiClient, logger)(callingUserId, filters)
             ),
-            getById: async (userId: string, ruleId: string): Promise<NotificationRule | null> => handleApiRequest(
-                getNotificationRuleById(apiClient)(userId, ruleId)
+            getById: async (callingUserId: string, ruleId: string, filters: Filters<NotificationRule> = {}): Promise<NotificationRule | null> => handleApiRequest(
+                getNotificationRuleById(apiClient, logger)(callingUserId, ruleId, filters)
             ),
-            create: async (userId: string, ruleData: any): Promise<NotificationRule | null> => handleApiRequest(
-                createNotificationRule(apiClient)(userId, ruleData)
+            create: async (callingUserId: string, ruleData: NotificationRuleCreateData): Promise<NotificationRule | null> => handleApiRequest(
+                createNotificationRule(apiClient, logger)(callingUserId, ruleData)
             ),
-            update: async (userId: string, ruleId: string, updateData: any): Promise<NotificationRule | null> => handleApiRequest(
-                updateNotificationRule(apiClient)(userId, ruleId, updateData)
+            update: async (callingUserId: string, ruleId: string, updateData: NotificationRuleUpdateData, filters: Filters<NotificationRule> = {}): Promise<NotificationRule | null> => handleApiRequest(
+                updateNotificationRule(apiClient, logger)(callingUserId, ruleId, updateData, filters)
             ),
-            delete: async (userId: string, ruleId: string): Promise<void | null> => handleApiRequest(
-                deleteNotificationRule(apiClient)(userId, ruleId)
+            delete: async (callingUserId: string, ruleId: string, filters: Filters<NotificationRule> = {}): Promise<void | null> => handleApiRequest(
+                deleteNotificationRule(apiClient, logger)(callingUserId, ruleId, filters)
             ),
         },
         users: {
-            get: async (): Promise<User[] | null> => handleApiRequest(
-                getUsers(apiClient)()
+            getAll: async (callingUserId: string, filters: Filters<User> = {}): Promise<User[] | null> => handleApiRequest(
+                getUsers(apiClient, logger)(callingUserId, filters)
             ),
-            getById: async (userId: string): Promise<User | null> => handleApiRequest(
-                getUserById(apiClient)(userId)
+            getById: async (targetUserId: string, callingUserId: string, filters: Filters<User> = {}): Promise<User | null> => handleApiRequest(
+                getUserById(apiClient, logger)(targetUserId, callingUserId, filters)
             ),
-            getByUsername: async (username: string): Promise<User | null> => handleApiRequest(
-                getByUsername(apiClient)(username)
+            getByUsername: async (username: string, callingUserId: string, filters: Filters<User> = {}): Promise<User | null> => handleApiRequest(
+                getByUsername(apiClient, logger)(username, callingUserId, filters)
             ),
-            create: async (profileData: any): Promise<User | null> => handleApiRequest(
-                createUserProfile(apiClient)(profileData)
+            create: async (profileData: UserCreateData, callingUserId: string): Promise<User | null> => handleApiRequest(
+                createUserProfile(apiClient, logger)(profileData, callingUserId)
             ),
-            update: async (userId: string, profileData: any): Promise<User | null> => handleApiRequest(
-                updateUserProfile(apiClient)(userId, profileData)
+            update: async (targetUserId: string, profileData: UserUpdateData, callingUserId: string, filters: Filters<User> = {}): Promise<User | null> => handleApiRequest(
+                updateUserProfile(apiClient, logger)(targetUserId, profileData, callingUserId, filters)
             ),
-            delete: async (userId: string): Promise<void | null> => handleApiRequest(
-                deleteUserProfile(apiClient)(userId)
-            ),
-            authenticate: async (username: string, hashedPassword: string): Promise<string | null> => handleApiRequest(
-                authenticateUser(apiClient)(username, hashedPassword)
+            delete: async (targetUserId: string, callingUserId: string, filters: Filters<User> = {}): Promise<void | null> => handleApiRequest(
+                deleteUserProfile(apiClient, logger)(targetUserId, callingUserId, filters)
             ),
         },
         auth: {
             isUserExists: async (username: string): Promise<boolean | null> => handleApiRequest(
-                isUserExists(apiClient)(username)
+                isUserExists(apiClient, logger)(username)
             ),
             register: async (username: string, hashedPassword: string): Promise<User | null> => handleApiRequest(
-                register(apiClient)(username, hashedPassword)
+                register(apiClient, logger)(username, hashedPassword)
             ),
             login: async (username: string, password: string): Promise<string | null> => handleApiRequest(
-                login(apiClient)(username, password)
+                login(apiClient, logger)(username, password)
             ),
         }
     }
