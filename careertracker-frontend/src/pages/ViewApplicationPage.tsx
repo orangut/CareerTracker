@@ -3,6 +3,7 @@ import { Box, Typography, Stack, Chip, Link, Divider, Rating, IconButton } from 
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import EditIcon from '@mui/icons-material/Edit';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { useJobApplications } from '../context/JobApplicationContext';
 import { getStatusChipStyles, getRemoteOptionChipStyles, formatDate, getSalaryString } from '../utils/helperFunctions.ts';
 
@@ -81,8 +82,14 @@ const ViewApplicationPage = () => {
             <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: 14 }}>
               {getSalaryString(job?.salaryMin, job?.salaryMax)}
             </Typography>
-            <Link href={job.jobUrl} target="_blank" rel="noopener">
-              {job.jobUrl}
+            <Link
+              href={job.jobUrl}
+              target="_blank"
+              rel="noopener"
+              variant="body2"
+              sx={{ display: 'flex', alignItems: 'center', fontWeight: 'bold' }}
+            >
+              {job.jobUrl} <OpenInNewIcon sx={{ fontSize: 16, ml: 0.5 }} />
             </Link>
           </Stack>
           <Divider />
