@@ -42,4 +42,20 @@ export const StageSchema = z.object({
     updatedAt: z.coerce.date()
 });
 
+export const StageCreateSchema = StageSchema.pick({
+    jobApplicationId: true,
+    type: true,
+    startedAt: true,
+    completedAt: true,
+    notes: true,
+}).partial({
+    completedAt: true,
+    notes: true,
+});
+
+export const StageUpdateSchema = StageCreateSchema.partial();
+
+export type StageCreateData = z.infer<typeof StageCreateSchema>;
+export type StageUpdateData = z.infer<typeof StageUpdateSchema>;
+
 export const stagesCollection = db.collection<Stage>("stages");

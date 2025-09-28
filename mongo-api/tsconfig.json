@@ -13,7 +13,7 @@
   },
   "include": [
     "src/**/*",
-    "src/routes/swagger/*.yaml"
+    "src/routes/swagger/*.yaml",
   ],
   "exclude": [
     "node_modules",

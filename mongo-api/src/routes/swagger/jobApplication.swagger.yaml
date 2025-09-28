@@ -203,11 +203,22 @@ components:
     Stage:
       type: object
       properties:
+        _id:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
         jobApplicationId:
           type: string
         startedAt:
           type: string
           format: date-time
+      required:
+        - jobApplicationId
+        - startedAt
 
     JobApplicationWithStages:
       allOf:
@@ -222,9 +233,5 @@ components:
             updatedAt:
               type: string
               format: date-time
-            allStages:
-              type: array
-              items:
-                $ref: '#/components/schemas/Stage'
             lastStage:
               $ref: '#/components/schemas/Stage'

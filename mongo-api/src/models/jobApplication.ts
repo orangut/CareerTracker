@@ -1,9 +1,9 @@
 // src/models/jobApplication.ts
-import { ObjectId } from "mongodb";
+import {ObjectId} from "mongodb";
 import {z} from "zod";
 
 import {client} from "../config/mongoClient";
-import {Stage, StageSchema} from "./stage";
+import {Stage} from "./stage";
 
 const db = client.db("career-tracker");
 
@@ -23,15 +23,18 @@ export interface JobApplication {
     jobUrl: string;
     isEdit: boolean;
     notes?: string[];
-    lastStage?: Stage;       // latest stage
-    allStages?: Stage[];     // optional array of all stages (denormalized)
+    lastStageId?: ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
 
+export interface JobApplicationPopulatedStage extends Omit<JobApplication, "lastStageId"> {
+    lastStage?: Stage;
+}
+
 export const JobApplicationSchema = z.object({
     userId: z.string().refine((val) => ObjectId.isValid(val), {
-        message: "Invalid jobApplicationId format"
+        message: "Invalid UserId format"
     }).transform((id) => new ObjectId(id)),
     company: z.string().min(1),
     position: z.string().min(1),
@@ -43,11 +46,35 @@ export const JobApplicationSchema = z.object({
     remoteOption: z.enum(['remote', 'hybrid', 'onsite']),
     jobUrl: z.url(),
     isEdit: z.boolean(),
+    lastStageId: z.string()
+        .refine((val) => ObjectId.isValid(val), {
+            message: "Invalid StageId format"
+        })
+        .transform((id) => new ObjectId(id))
+        .optional(),
     notes: z.array(z.string()).optional(),
-    lastStage: StageSchema.optional(),
-    allStages: z.array(StageSchema).optional(), // array of all stages
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date()
 });
+
+export const JobApplicationCreateSchema = JobApplicationSchema.omit({
+    lastStageId: true,
+    createdAt: true,
+    updatedAt: true,
+}).extend({
+    // Allow status to be provided, but it's optional, relying on server default if missing.
+    status: z.enum(['Applied', 'Interview', 'Offer', 'Rejected', 'Initial']).optional(),
+});
+
+// TypeScript type inference for POST request body data
+export type JobApplicationCreateData = z.infer<typeof JobApplicationCreateSchema>;
+
+export const JobApplicationUpdateSchema = JobApplicationCreateSchema.partial();
+
+// TypeScript type inference for PUT request body data
+export type JobApplicationUpdateData = z.infer<typeof JobApplicationUpdateSchema>;
+
+
+
 
 export const jobApplicationsCollection = db.collection<JobApplication>("job_applications");

@@ -1,109 +1,130 @@
 openapi: 3.0.0
 info:
-  title: Stage API
+  title: Stage Management API
   version: 1.0.0
-  description: API endpoints for managing stages of job applications
+  description: API for managing application stages associated with a Job Application.
 
-tags:
-  - name: Stage
-    description: Stage management
+servers:
+  # NOTE: Adjust the base path based on how your router is mounted
+  - url: /api/stage
+    description: Base URL for Stage endpoints
 
 paths:
-  /api/stages:
+  /api/stage:
+    # ----------------------------------------------------
+    # POST /api/stage - Create Stage
+    # ----------------------------------------------------
     post:
       tags:
-        - Stage
-      summary: Create a new stage
+        - Stages
+      summary: Create a new stage for a job application.
+      description: Validates user input, inserts a new stage, and updates the parent job application's lastStageId.
+      security:
+        # Assuming validation middleware requires user authentication/context
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StageInput'
+              $ref: '#/components/schemas/StageCreate'
       responses:
         '201':
-          description: Created
+          description: Stage successfully created.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  _id:
-                    type: string
+                $ref: '#/components/schemas/Stage'
+        '400':
+          description: Invalid input or validation error (e.g., missing required fields, invalid date format).
         '500':
-          description: Failed to create stage
+          description: Server error.
 
-  /api/stages/job/{jobId}:
+  /api/stage/{stageId}:
+    parameters:
+      - in: path
+        name: stageId
+        schema:
+          type: string
+          format: objectId
+        required: true
+        description: The ID of the Stage to retrieve, update, or delete.
+
+    # ----------------------------------------------------
+    # GET /api/stage/{stageId} - Get Stage by ID
+    # ----------------------------------------------------
     get:
       tags:
-        - Stage
-      summary: Get all stages for a job application
-      parameters:
-        - in: path
-          name: jobId
-          schema:
-            type: string
-          required: true
-          description: Job application ID
+        - Stages
+      summary: Retrieve a single stage by its ID.
+      description: Fetches a stage if it belongs to the authenticated user's job application.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: List of stages
+          description: Stage found.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Stage'
+                $ref: '#/components/schemas/Stage'
+        '404':
+          description: Stage not found or does not belong to the Job Application/User.
         '500':
-          description: Failed to fetch stages
+          description: Server error.
 
-  /api/stages/{id}:
+    # ----------------------------------------------------
+    # PUT /api/stage/{stageId} - Update Stage
+    # ----------------------------------------------------
     put:
       tags:
-        - Stage
-      summary: Update a stage
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          required: true
-          description: Stage ID
+        - Stages
+      summary: Update an existing stage.
+      description: Updates the stage details and modifies the parent job application's updatedAt timestamp.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StageInput'
+              $ref: '#/components/schemas/StageUpdate'
       responses:
         '200':
-          description: Updated successfully
+          description: Stage successfully updated. Returns the updated stage object.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
+                $ref: '#/components/schemas/Stage'
+        '400':
+          description: Invalid input or validation error.
         '404':
-          description: Not found
+          description: Stage not found.
         '500':
-          description: Failed to update stage
+          description: Server error.
 
+  /api/stage/{id}:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: objectId
+        required: true
+        description: The ID of the Stage to delete.
+
+    # ----------------------------------------------------
+    # DELETE /api/stage/{id} - Delete Stage
+    # ----------------------------------------------------
     delete:
       tags:
-        - Stage
-      summary: Delete a stage
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          required: true
-          description: Stage ID
+        - Stages
+      summary: Delete a stage.
+      description: Deletes the stage, recalculates the parent job application's lastStageId, and updates the timestamp.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Deleted successfully
+          description: Stage successfully deleted.
           content:
             application/json:
               schema:
@@ -111,36 +132,92 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: Deleted successfully
+                  lastStageId:
+                    type: string
+                    nullable: true
+                    format: objectId
+                    description: The ID of the new last stage, or null if no stages remain.
+        '400':
+          description: Invalid stage ID format.
         '404':
-          description: Not found
+          description: Stage not found.
         '500':
-          description: Failed to delete stage
+          description: Server error.
+
 
 components:
   schemas:
-    StageInput:
+    StageType:
+      type: string
+      enum: [applied, phone_screen, technical_interview, final_interview, offer, rejected, withdrawn]
+      description: The current type or status of the application stage.
+
+    Stage:
       type: object
       properties:
+        _id:
+          type: string
+          format: objectId
+          description: MongoDB ObjectId for the stage.
         jobApplicationId:
           type: string
+          format: objectId
+          description: Reference to the parent JobApplication.
+        type:
+          $ref: '#/components/schemas/StageType'
         startedAt:
           type: string
           format: date-time
-        # ...add other fields as needed...
+          description: Date the stage started.
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date the stage was completed.
+        notes:
+          type: array
+          items:
+            type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
       required:
         - jobApplicationId
+        - type
+        - startedAt
+        - createdAt
+        - updatedAt
+
+    StageCreate:
+      type: object
+      description: Schema for creating a new Stage (user input fields only).
+      properties:
+        type:
+          $ref: '#/components/schemas/StageType'
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: array
+          items:
+            type: string
+          nullable: true
+      required:
+        - type
         - startedAt
 
-    Stage:
+    StageUpdate:
+      type: object
+      description: Schema for updating an existing Stage (all fields are optional).
       allOf:
-        - $ref: '#/components/schemas/StageInput'
-        - type: object
-          properties:
-            _id:
-              type: string
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
+        - $ref: '#/components/schemas/StageCreate'
+      properties: {} # All fields inherited from StageCreate are made optional by the PUT endpoint logic.

@@ -18,7 +18,7 @@ export interface NotificationRule {
 
 export const NotificationRuleSchema = z.object({
     userId: z.string().refine((val) => ObjectId.isValid(val), {
-        message: "Invalid jobApplicationId format"
+        message: "Invalid userId format"
     }).transform((id) => new ObjectId(id)),
     offsetMs: z.number()
         .refine(value => value >= -MAX_OFFSET_MS && value <= MAX_OFFSET_MS, {
@@ -30,5 +30,15 @@ export const NotificationRuleSchema = z.object({
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
 });
+
+export const NotificationRuleCreateSchema = NotificationRuleSchema.omit({
+    userId: true,
+    offsetMs: true,
+})
+export const NotificationRuleUpdateSchema = NotificationRuleCreateSchema.partial()
+
+export type NotificationRuleCreateData = z.infer<typeof NotificationRuleCreateSchema>;
+export type NotificationRuleUpdateData = z.infer<typeof NotificationRuleUpdateSchema>;
+
 
 export const notificationRulesCollection = db.collection<NotificationRule>("notification_rules");

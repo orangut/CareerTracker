@@ -1,10 +1,13 @@
 import express from "express";
 import dotenv from "dotenv";
-import { connectMongo } from "./config/mongoClient";
+import {connectMongo} from "./config/mongoClient";
 import notificationsRulesRouter from "./routes/notificationRule";
 
 // Import your custom routes
 import apiRouter from './routes/index';
+
+// Import logger
+import logger from './config/logger';
 
 import swaggerUi from 'swagger-ui-express';
 
@@ -57,15 +60,20 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-// This console.log will confirm the resolved path. Check your terminal!
-console.log('Resolved Swagger API path:', path.join(__dirname, './routes/swagger/*.yaml'));
+// This logger.info will confirm the resolved path. Check your log file!
+logger.info(`Resolved Swagger API path: ${path.join(__dirname, './routes/swagger/*.yaml')}`);
 
 // Serve Swagger UI on the /api-docs route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+
 // --- API Routes ---
 app.use('/api', apiRouter);
 
-
-
-export default app;
+try {
+    app.listen(PORT, () => {
+        logger.info(`Server is running on port ${PORT}`);
+    });
+} catch (error) {
+    logger.error('Failed to start server:', error);
+}

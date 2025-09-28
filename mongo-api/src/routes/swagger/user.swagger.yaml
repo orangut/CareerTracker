@@ -10,7 +10,7 @@ tags:
     description: User management
 
 paths:
-  /api/users:
+  /api/user:
     post:
       tags:
         - User
@@ -52,7 +52,7 @@ paths:
         '500':
           description: Failed to fetch users
 
-  /api/users/{id}:
+  /api/user/{id}:
     get:
       tags:
         - User
@@ -136,45 +136,30 @@ paths:
         '500':
           description: Failed to delete user
 
-  /api/users/auth:
-    post:
+  /api/user/username/{username}:
+    get:
       tags:
         - User
-      summary: Authenticate a user
-      description: Validate username and hashedPassword. Returns userId if authentication is successful.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  example: "john_doe"
-                hashedPassword:
-                  type: string
-                  example: "hashedpassword123"
-              required:
-                - username
-                - hashedPassword
+      summary: Get a user by ID
+      parameters:
+        - in: path
+          name: username
+          schema:
+            type: string
+          required: true
+          description: User username
       responses:
         '200':
-          description: Authentication result
+          description: User
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  userId:
-                    type: string
-                    nullable: true
-        '400':
-          description: Missing username or password
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Not found
         '500':
-          description: Internal server error
+          description: Failed to fetch user
+
 
 components:
   schemas:
