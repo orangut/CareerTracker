@@ -1,10 +1,10 @@
-import {Box, Card, CardContent, Chip, IconButton, Link, Rating, Stack, Typography,} from '@mui/material';
+import { Box, Card, CardContent, Chip, IconButton, Link, Rating, Stack, Typography, Button } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import EditIcon from '@mui/icons-material/Edit';
-import {type JobApplication} from "../../models/JobApplication.ts";
-import {useNavigate} from "react-router-dom";
+import { type JobApplication } from "../../models/JobApplication.ts";
+import { useNavigate } from "react-router-dom";
 
 interface JobApplicationCardProps {
     job: JobApplication;
@@ -14,19 +14,19 @@ interface JobApplicationCardProps {
 const getStatusChipStyles = (status: JobApplication['currentStage']) => {
     switch (status) {
         case 'applied':
-            return {bgcolor: 'rgba(0, 150, 255, 0.1)', color: 'info.dark'}; // Blue
+            return { bgcolor: 'rgba(0, 150, 255, 0.1)', color: 'info.dark' }; // Blue
         case 'phone_screen':
-            return {bgcolor: 'rgba(150, 0, 150, 0.1)', color: 'secondary.dark'}; // Purple
+            return { bgcolor: 'rgba(150, 0, 150, 0.1)', color: 'secondary.dark' }; // Purple
         case 'technical_interview':
-            return {bgcolor: 'rgba(255, 165, 0, 0.1)', color: 'warning.dark'}; // Orange
+            return { bgcolor: 'rgba(255, 165, 0, 0.1)', color: 'warning.dark' }; // Orange
         case 'final_interview':
         case 'offer':
-            return {bgcolor: 'rgba(0, 128, 0, 0.1)', color: 'success.dark'}; // Green
+            return { bgcolor: 'rgba(0, 128, 0, 0.1)', color: 'success.dark' }; // Green
         case 'rejected':
         case 'withdrawn':
-            return {bgcolor: 'rgba(255, 0, 0, 0.1)', color: 'error.dark'}; // Red
+            return { bgcolor: 'rgba(255, 0, 0, 0.1)', color: 'error.dark' }; // Red
         default:
-            return {bgcolor: 'grey.200', color: 'grey.800'};
+            return { bgcolor: 'grey.200', color: 'grey.800' };
     }
 };
 
@@ -34,17 +34,17 @@ const getStatusChipStyles = (status: JobApplication['currentStage']) => {
 const getRemoteOptionChipStyles = (remoteOption: JobApplication['remoteOption']) => {
     switch (remoteOption) {
         case 'remote':
-            return {bgcolor: 'rgba(0, 128, 0, 0.1)', color: 'success.dark'};
+            return { bgcolor: 'rgba(0, 128, 0, 0.1)', color: 'success.dark' };
         case 'hybrid':
-            return {bgcolor: 'rgba(0, 0, 255, 0.1)', color: 'primary.dark'};
+            return { bgcolor: 'rgba(0, 0, 255, 0.1)', color: 'primary.dark' };
         case 'onsite':
-            return {bgcolor: 'rgba(128, 0, 128, 0.1)', color: 'secondary.dark'};
+            return { bgcolor: 'rgba(128, 0, 128, 0.1)', color: 'secondary.dark' };
         default:
-            return {bgcolor: 'grey.200', color: 'grey.800'};
+            return { bgcolor: 'grey.200', color: 'grey.800' };
     }
 };
 
-const JobApplicationCard = ({job}: JobApplicationCardProps) => {
+const JobApplicationCard = ({ job }: JobApplicationCardProps) => {
     const dateOptions = {
         year: 'numeric',
         month: 'short',
@@ -93,15 +93,15 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                     }}
                 >
                     <IconButton size="small">
-                        <EditIcon fontSize="small" onClick={() => navigate(`/edit/${job.id}`)}/>
+                        <EditIcon fontSize="small" onClick={() => navigate(`/edit/${job.id}`)} />
                     </IconButton>
                 </Box>
             )}
 
-            <CardContent sx={{p: 2, pb: 0, flexGrow: 1}}>
+            <CardContent sx={{ p: 2, pb: 0, flexGrow: 1 }}>
                 {/* Title, company, and edit icon */}
-                <Box sx={{mb: 2}}>
-                    <Typography variant="h6" component="div" sx={{fontWeight: 'bold'}}>
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
                         {job.position}
                     </Typography>
                     <Typography variant="subtitle1" color="text.secondary">
@@ -110,15 +110,15 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                 </Box>
 
                 {/* Location and Applied Date */}
-                <Box sx={{mb: 3}}>
-                    <Stack direction="row" alignItems="center" spacing={1.5} sx={{mb: 2}}>
-                        <LocationOnIcon fontSize="small" color="action"/>
+                <Box sx={{ mb: 3 }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+                        <LocationOnIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
                             {job.location}
                         </Typography>
                     </Stack>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <CalendarTodayIcon fontSize="small" color="action"/>
+                        <CalendarTodayIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
                             Applied {formattedDate}
                         </Typography>
@@ -130,7 +130,7 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                     direction="row"
                     justifyContent="space-between"
                     alignItems="center" // Aligns items vertically in the center
-                    sx={{mb: 2}} // Adds margin below the stack for spacing
+                    sx={{ mb: 2 }} // Adds margin below the stack for spacing
                 >
                     <Rating
                         name="job-rating"
@@ -152,23 +152,26 @@ const JobApplicationCard = ({job}: JobApplicationCardProps) => {
                         size="small"
                         sx={getStatusChipStyles(job.currentStage)}
                     />
-                    <Link
+                    {/* <Link
                         href={job.jobUrl}
                         target="_blank"
                         rel="noopener"
                         variant="body2"
-                        sx={{display: 'flex', alignItems: 'center', fontWeight: 'bold'}}
+                        sx={{ display: 'flex', alignItems: 'center', fontWeight: 'bold' }}
                     >
-                        View Details <OpenInNewIcon sx={{fontSize: 16, ml: 0.5}}/>
-                    </Link>
+                        View Details <OpenInNewIcon sx={{ fontSize: 16, ml: 0.5 }} />
+                    </Link> */}
+                    <Button variant='text' sx={{ textTransform: "none" }} onClick={() => navigate(`/view/${job.id}`)}>
+                        View Details
+                    </Button>
                 </Stack>
             </CardContent>
 
             {/* Salary Range (Pushed to the bottom) */}
             <Box
-                sx={{p: 3, pt: 0, display: 'flex', justifyContent: 'flex-start', pl: 2}}
+                sx={{ p: 3, pt: 0, display: 'flex', justifyContent: 'flex-start', pl: 2 }}
             >
-                <Typography variant="h6" sx={{fontWeight: 'bold', fontSize: 14}}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: 14 }}>
                     {job?.salaryMin ? `${job.salaryMin.toString()}k$` : '?'} - {job?.salaryMax ? `${job.salaryMax}k$` : '?'}
                 </Typography>
             </Box>

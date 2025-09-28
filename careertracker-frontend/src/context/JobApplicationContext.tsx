@@ -107,7 +107,7 @@ export const JobApplicationProvider = ({ children }: { children: ReactNode }) =>
         }
     };
 
-    const readJobApplication = (id: string) => state.jobApplications.find(job => job.id === id);
+    const readJobApplication = (id: string) => state.jobApplications.find(job => job.id.toString() === id);
 
     // Conditionally render based on the new loading state
     if (loading) {
