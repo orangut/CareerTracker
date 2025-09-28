@@ -1,4 +1,4 @@
-import {AxiosInstance} from 'axios';
+import { AxiosInstance } from 'axios';
 // Assuming JobApplication, JobApplicationCreateData, JobApplicationUpdateData, Filters, MyRequestBody, and JobApplicationPopulatedStage are defined in interfaces
 import {
     JobApplication,
@@ -6,10 +6,11 @@ import {
     Filters,
     MyRequestBody,
     JobApplicationCreateData,
-    JobApplicationUpdateData
+    JobApplicationUpdateData,
+    Stage
 } from './interfaces';
-import {BASE_PATH_JOB_APPLICATION} from "./constants";
-import {Logger} from 'winston';
+import { BASE_PATH_JOB_APPLICATION } from "./constants";
+import { Logger } from 'winston';
 
 
 /**
@@ -35,7 +36,7 @@ export const createJobApplication = (apiClient: AxiosInstance, logger: Logger) =
         logger.info(`Successfully created a new job application for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Failed to create a new job application for user: ${callingUserId}`, {error});
+        logger.error(`Failed to create a new job application for user: ${callingUserId}`, { error });
         throw error;
     }
 };
@@ -63,7 +64,7 @@ export const getAllJobApplications = (apiClient: AxiosInstance, logger: Logger) 
         logger.info(`Successfully fetched all job applications for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Failed to fetch all job applications for user: ${callingUserId}`, {error});
+        logger.error(`Failed to fetch all job applications for user: ${callingUserId}`, { error });
         throw error;
     }
 };
@@ -92,10 +93,41 @@ export const getJobApplicationById = (apiClient: AxiosInstance, logger: Logger) 
         logger.info(`Successfully fetched job application with ID: ${applicationId} for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Failed to fetch job application with ID: ${applicationId} for user: ${callingUserId}`, {error});
+        logger.error(`Failed to fetch job application with ID: ${applicationId} for user: ${callingUserId}`, { error });
         throw error;
     }
 };
+
+/**
+ * Fetches all stages for a specific job application ID.
+ * Authorization context and filters (used to check authorization on the parent application) are sent in the body payload.
+ */
+export const getStagesByJobApplicationId = (apiClient: AxiosInstance, logger: Logger) => async (
+    callingUserId: string,
+    applicationId: string,
+    filters: Filters<JobApplication> = {} // Filters must check authorization on the PARENT resource (JobApplication)
+): Promise<Stage[] | null> => {
+    try {
+        const payload: MyRequestBody<JobApplication> = {
+            userId: callingUserId,
+            filters: filters // Pass role-based filters
+        };
+
+        const path = `${BASE_PATH_JOB_APPLICATION}/${applicationId}/stages`;
+        const url = `${apiClient.defaults.baseURL}${path}`;
+        logger.info(`Requesting stages for job application ID: ${applicationId} for user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
+
+        // Use POST to send the authorization context
+        // The path reflects the nested RESTful route: /jobapplications/{id}/stages
+        const response = await apiClient.post<Stage[]>(path, payload);
+        logger.info(`Successfully fetched stages for job application ID: ${applicationId} for user: ${callingUserId}`);
+        return response.data;
+    } catch (error) {
+        logger.error(`Failed to fetch stages for job application ID: ${applicationId} for user: ${callingUserId}`, { error });
+        throw error;
+    }
+};
+
 
 /**
  * Updates an existing job application.
@@ -123,7 +155,7 @@ export const updateJobApplication = (apiClient: AxiosInstance, logger: Logger) =
         logger.info(`Successfully updated job application with ID: ${applicationId} for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Failed to update job application with ID: ${applicationId} for user: ${callingUserId}`, {error});
+        logger.error(`Failed to update job application with ID: ${applicationId} for user: ${callingUserId}`, { error });
         throw error;
     }
 };
@@ -148,10 +180,10 @@ export const deleteJobApplication = (apiClient: AxiosInstance, logger: Logger) =
         logger.info(`Deleting job application with ID: ${applicationId} for user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
 
         // Axios's DELETE method supports sending a body via the 'data' config property
-        await apiClient.delete(path, {data: payload});
+        await apiClient.delete(path, { data: payload });
         logger.info(`Successfully deleted job application with ID: ${applicationId} for user: ${callingUserId}`);
     } catch (error) {
-        logger.error(`Failed to delete job application with ID: ${applicationId} for user: ${callingUserId}`, {error});
+        logger.error(`Failed to delete job application with ID: ${applicationId} for user: ${callingUserId}`, { error });
         throw error;
     }
 };

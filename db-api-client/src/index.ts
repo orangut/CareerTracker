@@ -5,17 +5,10 @@ import {
     createJobApplication,
     deleteJobApplication,
     getAllJobApplications,
-    getJobApplicationById,
+    getJobApplicationById, getStagesByJobApplicationId,
     updateJobApplication
 } from './jobApplication';
-import {
-    createStage,
-    deleteStage,
-    getAllStages,
-    getAllStagesByJobApplicationId,
-    getStageById,
-    updateStage
-} from './stage';
+import {createStage, deleteStage, getStageById, updateStage} from './stage';
 import {
     createNotificationRule,
     deleteNotificationRule,
@@ -58,21 +51,32 @@ const handleApiRequest = async <T>(request: Promise<T>): Promise<T | null> => {
     }
 };
 
+// Helper function to check if a string is a valid URL
+const isUrlValid = (url: string): boolean => {
+    try {
+        // The URL constructor throws an error if the URL is not valid.
+        new URL(url);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+
 /**
  * The core client object that provides access to all API functions.
  * Functions are wrapped to automatically pass the apiClient instance and handle error wrapping.
  */
-const dbApiClient = (db_api_url: string, optionalLogger: Logger) => {
-    // Initialize the Axios client with shared configuration
-    const DB_API_URL = db_api_url
-    const logger = optionalLogger
-
-    if (!DB_API_URL) {
-        throw new Error("DB_API_URL must be provided (argument or env variable).");
+const dbApiClient = (db_api_url: string, logger: Logger) => {
+    if (!isUrlValid(db_api_url)) {
+        // Note: Logging the invalid URL is useful for debugging
+        logger.error(`Invalid DB_API_URL provided: ${db_api_url}`);
+        throw new Error(`DB_API_URL "${db_api_url}" is not a valid URL.`);
     }
 
+
     const apiClient: AxiosInstance = axios.create({
-        baseURL: DB_API_URL,
+        baseURL: db_api_url,
         headers: {'Content-Type': 'application/json'},
     });
 
@@ -83,6 +87,9 @@ const dbApiClient = (db_api_url: string, optionalLogger: Logger) => {
             ),
             getById: async (callingUserId: string, applicationId: string, filters: Filters<JobApplication> = {}): Promise<JobApplicationPopulatedStage | null> => handleApiRequest(
                 getJobApplicationById(apiClient, logger)(callingUserId, applicationId, filters)
+            ),
+            getStagesByJobApplicationId: async (callingUserId: string, applicationId: string, filters: Filters<JobApplication> = {}): Promise<Stage[] | null> => handleApiRequest(
+                getStagesByJobApplicationId(apiClient, logger)(callingUserId, applicationId, filters)
             ),
             create: async (callingUserId: string, appData: JobApplicationCreateData): Promise<JobApplication | null> => handleApiRequest(
                 createJobApplication(apiClient, logger)(callingUserId, appData)
@@ -95,12 +102,6 @@ const dbApiClient = (db_api_url: string, optionalLogger: Logger) => {
             ),
         },
         stages: {
-            getAll: async (callingUserId: string, filters: Filters<Stage> = {}): Promise<Stage[] | null> => handleApiRequest(
-                getAllStages(apiClient, logger)(callingUserId, filters)
-            ),
-            getAllByJobApplicationId: async (callingUserId: string, jobApplicationId: string, filters: Filters<Stage> = {}): Promise<Stage[] | null> => handleApiRequest(
-                getAllStagesByJobApplicationId(apiClient, logger)(callingUserId, jobApplicationId, filters)
-            ),
             getById: async (callingUserId: string, stageId: string, filters: Filters<Stage> = {}): Promise<Stage | null> => handleApiRequest(
                 getStageById(apiClient, logger)(callingUserId, stageId, filters)
             ),

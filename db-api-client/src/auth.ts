@@ -20,7 +20,7 @@ export const isUserExists = (apiClient: AxiosInstance, logger: Logger) => async 
         logger.info(`Successfully checked for user existence for username: ${username}`);
         return response.data.exists;
     } catch (error) {
-        logger.error(`Failed to check for user existence for username: ${username}`, { error });
+        logger.error(`Failed to check for user existence for username: ${username}`, {error});
         throw error;
     }
 };
@@ -36,7 +36,7 @@ export const register = (apiClient: AxiosInstance, logger: Logger) => async (
 ): Promise<User> => {
     try {
         // Simple payload for registration, as user ID does not exist yet.
-        const payload = { username, hashedPassword };
+        const payload = {username, hashedPassword};
         const url = `${apiClient.defaults.baseURL}${BASE_PATH_AUTH}/register`;
         logger.info(`Registering new user: ${username} to URL: ${url}`);
         // Using POST with a simple payload
@@ -44,7 +44,7 @@ export const register = (apiClient: AxiosInstance, logger: Logger) => async (
         logger.info(`Successfully registered new user: ${username}`);
         return response.data;
     } catch (error) {
-        logger.error(`Failed to register user: ${username}`, { error });
+        logger.error(`Failed to register user: ${username}`, {error});
         throw error;
     }
 };
@@ -60,7 +60,7 @@ export const login = (apiClient: AxiosInstance, logger: Logger) => async (
 ): Promise<string | null> => {
     try {
         // Simple payload for authentication, as user ID needs to be retrieved upon success.
-        const payload = { username, password };
+        const payload = {username, password};
         const url = `${apiClient.defaults.baseURL}${BASE_PATH_AUTH}/auth`;
         logger.info(`Attempting login for user: ${username} to URL: ${url}`);
         const response = await apiClient.post<IsLoginSuccess>(`${BASE_PATH_AUTH}/auth`, payload);
@@ -72,7 +72,7 @@ export const login = (apiClient: AxiosInstance, logger: Logger) => async (
             return null;
         }
     } catch (error) {
-        logger.error(`Authentication failed for user: ${username}`, { error });
+        logger.error(`Authentication failed for user: ${username}`, {error});
         throw error;
     }
 };
