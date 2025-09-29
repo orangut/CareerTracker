@@ -1,14 +1,21 @@
+openapi: 3.0.0
+info:
+  title: JobApplication API
+  version: 1.0.0
+  description: API endpoints for managing JobApplication
+
 tags:
   - name: Job Applications
-    description: API for managing job application records
+    description: API for managing job applications.
+
 
 paths:
-  /api/job-applications:
+  /api/job-application:
     get:
-      summary: Get all job applications for the authenticated user
-      description: Retrieves a list of all job application records that belong to the user authenticated via the HttpOnly cookie.
       tags:
         - Job Applications
+      summary: Get all job applications for the authenticated user
+      description: Retrieves a list of all job applications associated with the authenticated user.
       security:
         - bearerAuth: []
       responses:
@@ -20,16 +27,15 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/JobApplication'
-        '401':
-          description: Unauthorized - The provided token is missing or invalid.
+        '403':
+          description: Not authorized
         '500':
-          description: Internal server error.
-
+          description: Internal server error
     post:
-      summary: Create a new job application
-      description: Creates a new job application record linked to the authenticated user.
       tags:
         - Job Applications
+      summary: Create a new job application
+      description: Creates a new job application for the authenticated user.
       security:
         - bearerAuth: []
       requestBody:
@@ -37,139 +43,330 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                company:
-                  type: string
-                  example: "Google"
-                position:
-                  type: string
-                  example: "Software Engineer"
-                location:
-                  type: string
-                  example: "Mountain View, CA"
-                applicationDate:
-                  type: string
-                  format: date
-                  example: "2025-09-17"
-                interestLevel:
-                  type: number
-                  example: 5
-                currentStage:
-                  type: string
-                  enum:
-                    - "applied"
-                    - "phone_screen"
-                    - "technical_interview"
-                    - "final_interview"
-                    - "offer"
-                    - "rejected"
-                    - "withdrawn"
-                  example: "applied"
-                salaryMin:
-                  type: number
-                  example: 120000
-                salaryMax:
-                  type: number
-                  example: 150000
-                remoteOption:
-                  type: string
-                  enum:
-                    - "remote"
-                    - "hybrid"
-                    - "onsite"
-                  example: "remote"
-                jobUrl:
-                  type: string
-                  format: url
-                  example: "https://careers.google.com/jobs/..."
-                isEdit:
-                  type: boolean
-                  example: false
-                notes:
-                  type: array
-                  items:
-                    type: string
-                  example: ["Initial conversation with recruiter."]
-                stages:
-                  type: array
-                  items:
-                    type: string
-                  example: ["Applied online", "Recruiter call scheduled"]
+              $ref: '#/components/schemas/JobApplicationInput'
       responses:
         '201':
-          description: Job application created successfully.
+          description: The created job application
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobApplication'
         '400':
-          description: Invalid input data.
-        '401':
-          description: Unauthorized - The provided token is missing or invalid.
-
+          description: Bad request, data provided is invalid.
+        '403':
+          description: Not authorized
+        '500':
+          description: Internal server error
+  /api/job-application/{id}:
+    get:
+      tags:
+        - Job Applications
+      summary: Get a single job application by ID
+      description: Retrieves a single job application by its ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the job application.
+      responses:
+        '200':
+          description: The requested job application.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplication'
+        '403':
+          description: Not authorized
+        '404':
+          description: Job application not found
+        '500':
+          description: Internal server error
+    put:
+      tags:
+        - Job Applications
+      summary: Update a job application
+      description: Updates an existing job application by its ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the job application to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobApplicationInput'
+      responses:
+        '200':
+          description: The updated job application.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplication'
+        '403':
+          description: Not authorized
+        '404':
+          description: Job application not found
+        '500':
+          description: Internal server error
+    delete:
+      tags:
+        - Job Applications
+      summary: Delete a job application
+      description: Deletes a job application by its ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the job application to delete.
+      responses:
+        '200':
+          description: Job application deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '403':
+          description: Not authorized
+        '404':
+          description: Job application not found
+        '500':
+          description: Internal server error
 components:
   schemas:
     JobApplication:
       type: object
       properties:
         id:
-          type: number
-          description: The unique identifier for the job application.
-          example: 101
+          type: string
+          description: The unique ID of the job application.
+          example: '65239a2f90a6f4a86b3e346f'
         userId:
-          type: number
+          type: string
           description: The ID of the user who owns this application.
-          example: 25
+          example: '65239a2f90a6f4a86b3e3470'
         company:
           type: string
-          example: "Google"
+          description: The company name.
+          example: 'Google'
         position:
           type: string
-          example: "Software Engineer"
+          description: The title of the job.
+          example: 'Software Engineer'
         location:
           type: string
-          example: "Mountain View, CA"
+          description: The job location.
+          example: 'Mountain View, CA'
         applicationDate:
           type: string
           format: date
-          example: "2025-09-17T12:00:00Z"
+          description: The date the application was submitted.
+          example: '2023-10-26'
         interestLevel:
           type: number
-          example: 5
-        currentStage:
-          type: string
-          enum:
-            - "applied"
-            - "phone_screen"
-            - "technical_interview"
-            - "final_interview"
-            - "offer"
-            - "rejected"
-            - "withdrawn"
-          example: "applied"
+          format: float
+          description: A numerical rating of interest, from 0 to 10.
+          example: 8
         salaryMin:
           type: number
+          description: The minimum salary offered.
           example: 120000
         salaryMax:
           type: number
+          description: The maximum salary offered.
           example: 150000
         remoteOption:
           type: string
+          description: Indicates if the job is remote, hybrid, or onsite.
           enum:
-            - "remote"
-            - "hybrid"
-            - "onsite"
-          example: "remote"
+            - remote
+            - hybrid
+            - onsite
+          example: 'hybrid'
         jobUrl:
           type: string
-          format: url
-          example: "https://careers.google.com/jobs/..."
+          format: uri
+          description: The URL of the job posting.
+          example: 'https://careers.google.com/jobs/results/'
         isEdit:
           type: boolean
+          description: A flag indicating if the application is being edited.
           example: false
         notes:
           type: array
           items:
             type: string
-          example: ["Initial conversation with recruiter."]
+          description: An array of notes related to the application.
+          example: ['Initial contact on LinkedIn', 'Recruiter call scheduled for next week']
+        lastStage:
+          type: Object
+          items:
+            $ref: '#/components/schemas/Stage'
+          description: The last recorded stage of the application.
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the application was created.
+          example: '2023-10-26T10:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: The date and time the application was last updated.
+          example: '2023-10-26T12:30:00Z'
+    JobApplicationInput:
+      type: object
+      properties:
+        company:
+          type: string
+          description: The company name.
+          example: 'Google'
+        position:
+          type: string
+          description: The job title.
+          example: 'Software Engineer'
+        location:
+          type: string
+          description: The job location.
+          example: 'Mountain View, CA'
+        applicationDate:
+          type: string
+          format: date
+          description: The submission date.
+          example: '2023-10-26'
+        interestLevel:
+          type: number
+          format: float
+          description: A numerical rating of interest, from 0 to 10.
+          example: 8
+        salaryMin:
+          type: number
+          description: The minimum salary offered.
+          example: 120000
+        salaryMax:
+          type: number
+          description: The maximum salary offered.
+          example: 150000
+        remoteOption:
+          type: string
+          description: Indicates if the job is remote, hybrid, or onsite.
+          enum:
+            - remote
+            - hybrid
+            - onsite
+          example: 'hybrid'
+        jobUrl:
+          type: string
+          format: uri
+          description: The URL of the job posting.
+          example: 'https://careers.google.com/jobs/results/'
+        isEdit:
+          type: boolean
+          description: A flag indicating if the application is being edited.
+          example: false
+        notes:
+          type: array
+          items:
+            type: string
+          description: An array of notes related to the application.
+          example: ['Initial contact on LinkedIn', 'Recruiter call scheduled for next week']
+
+    Stage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique ID of the stage.
+          example: '65239a2f90a6f4a86b3e3471'
+        jobApplicationId:
+          type: string
+          description: The ID of the job application this stage belongs to.
+          example: '65239a2f90a6f4a86b3e346f'
+        type:
+          type: string
+          description: The type of the stage.
+          enum:
+            - applied
+            - phone_screen
+            - technical_interview
+            - final_interview
+            - offer
+            - rejected
+            - withdrawn
+          example: 'applied'
+        startedAt:
+          type: string
+          format: date-time
+          description: The date and time the stage was started.
+          example: '2023-10-26T10:00:00Z'
+        completedAt:
+          type: string
+          format: date-time
+          description: The date and time the stage was completed.
+          example: '2023-10-27T10:00:00Z'
+        notes:
+          type: array
+          items:
+            type: string
+          description: Any notes about this specific stage.
+          example: ['Successfully submitted resume via online portal.']
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the stage was created.
+          example: '2023-10-26T10:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: The date and time the stage was last updated.
+          example: '2023-10-26T12:30:00Z'
+    StageInput:
+      type: object
+      properties:
+        jobApplicationId:
+          type: string
+          description: The ID of the job application this stage belongs to.
+          example: '65239a2f90a6f4a86b3e346f'
+        type:
+          type: string
+          description: The type of the stage.
+          enum:
+            - applied
+            - phone_screen
+            - technical_interview
+            - final_interview
+            - offer
+            - rejected
+            - withdrawn
+          example: 'applied'
+        startedAt:
+          type: string
+          format: date-time
+          description: The date and time the stage was started.
+          example: '2023-10-26T10:00:00Z'
+        completedAt:
+          type: string
+          format: date-time
+          description: The date and time the stage was completed.
+          example: '2023-10-27T10:00:00Z'
+        notes:
+          type: array
+          items:
+            type: string
+          description: Any notes about this specific stage.
+          example: ['Successfully submitted resume via online portal.']

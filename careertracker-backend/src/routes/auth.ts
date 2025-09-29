@@ -2,6 +2,7 @@ import express, {Request, Response} from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import logger from '../config/logger';
 
 import {User, dbClient} from "../config/dbClient";
 
@@ -15,6 +16,7 @@ authRouter.post('/register', async (req: Request, res: Response) => {
     const {username, password} = req.body;
 
     if (!username || !password) {
+        logger.warn('Registration attempt failed: Username or password missing.');
         return res.status(400).send('Username and password are required.');
     }
 
@@ -22,6 +24,7 @@ authRouter.post('/register', async (req: Request, res: Response) => {
         // Check if user already exists
         const existingUser = await dbClient.auth.isUserExists(username);
         if (existingUser) {
+            logger.warn(`Registration attempt failed: Username '${username}' already exists.`);
             return res.status(409).send('Username already exists.');
         }
 
@@ -39,13 +42,15 @@ authRouter.post('/register', async (req: Request, res: Response) => {
             maxAge: tokenExpirationTimeInHours * 3600000 // tokenExpirationTimeInHours in milliseconds
         });
 
+        logger.info(`User successfully registered: '${username}'`);
         res.status(201).json({token});
     } catch (error: any) {
         // Handle a Sequelize unique constraint error if username already exists
         if (error.name === 'SequelizeUniqueConstraintError') {
+            logger.warn(`Registration attempt failed due to unique constraint error for username '${username}'.`, { error });
             return res.status(409).send('Username already exists.');
         }
-        console.error('Registration error:', error);
+        logger.error(`Registration error for username '${username}'.`, { error });
         res.status(500).send('Error registering user.');
     }
 });
@@ -55,6 +60,7 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     const {username, password} = req.body;
 
     if (!username || !password) {
+        logger.warn('Login attempt failed: Username or password missing.');
         return res.status(400).send('Username and password are required.');
     }
 
@@ -63,6 +69,7 @@ authRouter.post('/login', async (req: Request, res: Response) => {
         const userId = await dbClient.auth.login(username, password);
 
         if (!userId) {
+            logger.warn(`Login attempt failed: Invalid credentials for username '${username}'.`);
             return res.status(400).json({error: 'Invalid credentials'});
         }
 
@@ -76,9 +83,10 @@ authRouter.post('/login', async (req: Request, res: Response) => {
             maxAge: tokenExpirationTimeInHours * 3600000 // tokenExpirationTimeInHours in milliseconds
         });
 
+        logger.info(`User successfully logged in: '${username}'`);
         res.json({token});
     } catch (error: any) {
-        console.error('Login error:', error);
+        logger.error(`Login error for username '${username}'.`, { error });
         res.status(500).send('Error logging in.');
     }
 });

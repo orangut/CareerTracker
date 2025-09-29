@@ -10,6 +10,10 @@ import swaggerJsdoc from 'swagger-jsdoc';
 // Import your custom routes
 import apiRouter from './routes';
 
+// Import logger
+import logger from './config/logger';
+
+
 // Import cookie middleware
 import cookieParser from 'cookie-parser';
 
@@ -41,31 +45,33 @@ const swaggerOptions = {
             description: 'API for tracking job applications',
         },
         servers: [
-            {
-                url: 'http://localhost:3000',
-            },
+            { url: 'http://localhost:3000' },
         ],
         components: {
             securitySchemes: {
-                bearerAuth: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
+                cookieAuth: {
+                    type: 'apiKey',
+                    in: 'cookie',
+                    name: 'userId',
                 },
             },
         },
+        // Apply globally to all paths
+        security: [
+            { cookieAuth: [] }
+        ],
     },
-    // Fix: Use __dirname to build a path relative to the current file (index.ts)
     apis: [
-        path.join(__dirname, './routes/swagger/*.yaml')
+        path.join(__dirname, './routes/swagger/*.yaml'),
     ],
 };
 
 
+
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-// This console.log will confirm the resolved path. Check your terminal!
-console.log('Resolved Swagger API path:', path.join(__dirname, './routes/swagger/*.yaml'));
+// This logger.info will confirm the resolved path. Check your log file!
+logger.info(`Resolved Swagger API path: ${path.join(__dirname, './routes/swagger/*.yaml')}`);
 
 // Serve Swagger UI on the /api-docs route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -73,7 +79,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // --- API Routes ---
 app.use('/api', apiRouter);
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
-})
 
+try {
+    app.listen(PORT, () => {
+        logger.info(`Server is running on port ${PORT}`);
+    });
+} catch (error) {
+    logger.error('Failed to start server:', error);
+}
