@@ -1,3 +1,5 @@
+import type { Stage } from "./stage";
+
 export const allStages = [
     'applied',
     'phone_screen',
@@ -31,5 +33,5 @@ export type JobApplication = {
     jobUrl: string;
     isEdit: boolean;
     notes?: string[];
-    stages?: string[];
+    stages?: Stage[];
 }

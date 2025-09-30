@@ -35,12 +35,16 @@ export const getRemoteOptionChipStyles = (remoteOption: JobApplication['remoteOp
 };
 
 // Helper function to format dates
-export const formatDate = (date: Date | string): string => {
-    const dateOptions = {
+export const formatDate = (date: Date | string, withTime: boolean = false): string => {
+    const dateOptions: Intl.DateTimeFormatOptions = {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
-    } as Intl.DateTimeFormatOptions;
+    };
+    if (withTime) {
+        dateOptions.hour = '2-digit';
+        dateOptions.minute = '2-digit';
+    }
     const formattedDate = new Date(date).toLocaleDateString(
         'en-US',
         dateOptions
@@ -48,6 +52,6 @@ export const formatDate = (date: Date | string): string => {
     return formattedDate;
 }
 
-export const getSalaryString = (salaryMin?: number | undefined, salaryMax?: number | undefined): string  =>{
+export const getSalaryString = (salaryMin?: number | undefined, salaryMax?: number | undefined): string => {
     return `${salaryMin ? `${salaryMin.toString()}k$` : '?'} - ${salaryMax ? `${salaryMax}k$` : '?'}`
 }
