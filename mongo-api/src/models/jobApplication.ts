@@ -61,10 +61,7 @@ export const JobApplicationCreateSchema = JobApplicationSchema.omit({
     lastStageId: true,
     createdAt: true,
     updatedAt: true,
-}).extend({
-    // Allow status to be provided, but it's optional, relying on server default if missing.
-    status: z.enum(['Applied', 'Interview', 'Offer', 'Rejected', 'Initial']).optional(),
-});
+})
 
 // TypeScript type inference for POST request body data
 export type JobApplicationCreateData = z.infer<typeof JobApplicationCreateSchema>;

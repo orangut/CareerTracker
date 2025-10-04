@@ -64,6 +64,7 @@ jobApplicationRouter.get('/:applicationId/stages', async (req: FilterMiddlewareR
             return res.status(403).send('Not authorized');
         }
         logger.info(`Fetching stages for application ID: ${applicationId} for user: ${userId}`);
+        // FIXME: the catch dont catch the errors threw from dbClient
         const stages = await dbClient.jobApplications.getStagesByJobApplicationId(userId, applicationId, filters);
         if (!stages) {
             logger.info(`Stages not found for application ID: ${applicationId}. Returning empty array.`);

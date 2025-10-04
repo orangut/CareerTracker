@@ -25,11 +25,14 @@ type DeleteRuleReq = MyRequestType<NotificationRule>;
 
 // Create Notification Rule
 notificationRuleRouter.post("/", async (req: CreateRuleReq, res: Response) => {
+    const userId = req.authContext?.userId;
+    const data = req.authContext?.data;
+
     try {
         // 1. Validate request body data using the specific creation schema
-        const parseInputResult = NotificationRuleCreateSchema.safeParse(req.body.data);
+        const parseInputResult = NotificationRuleCreateSchema.safeParse(data);
         if (!parseInputResult.success) {
-            logger.warn(`Failed to create notification rule due to validation error: ${parseInputResult.error.issues}. UserId: ${req.body.userId}`);
+            logger.warn(`Failed to create notification rule due to validation error: ${parseInputResult.error.issues}. UserId: ${userId}`);
             return res.status(400).json({error: parseInputResult.error.issues});
         }
 
@@ -51,58 +54,69 @@ notificationRuleRouter.post("/", async (req: CreateRuleReq, res: Response) => {
             ...notificationRuleData
         };
 
-        logger.info(`Successfully created new notification rule with ID: ${result.insertedId} for user: ${notificationRuleData.userId}. UserId: ${req.body.userId}`);
+        logger.info(`Successfully created new notification rule with ID: ${result.insertedId} for user: ${notificationRuleData.userId}. UserId: ${userId}`);
         res.status(201).json(newNotificationRule);
     } catch (err) {
-        logger.error(`Error creating notification rule. UserId: ${req.body.userId}: ${err}`);
+        logger.error(`Error creating notification rule. UserId: ${userId}: ${err}`);
         res.status(500).json({error: "Failed to create notification rule"});
     }
 });
 
 // Get all notification rules for user
 notificationRuleRouter.get("/", async (req: GetRuleReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
+
     try {
-        // Use req.body.filters to ensure only the authenticated user's rules are returned
-        const rules = await notificationRulesCollection.find(req.body.filters || {}).toArray();
-        logger.info(`Successfully fetched all notification rules. UserId: ${req.body.userId}`);
-        res.json(rules);
+        // Use filters to ensure only the authenticated user's rules are returned
+        const rules = await notificationRulesCollection.find(filters || {}).toArray();
+        logger.info(`Successfully fetched all notification rules. UserId: ${userId}`);
+        return res.json(rules);
     } catch (err) {
-        logger.error(`Error fetching notification rules. UserId: ${req.body.userId}: ${err}`);
-        res.status(500).json({error: "Failed to fetch notification rules"});
+        logger.error(`Error fetching notification rules. UserId: ${userId}: ${err}`);
+        return res.status(500).json({error: "Failed to fetch notification rules"});
     }
 });
 
 // Get single notification rule by ID
 notificationRuleRouter.get("/:id", validateObjectId, async (req: GetRuleReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
+
+    const {id} = req.params
+    const ruleIdObject = new ObjectId(id as string);
     try {
-        const ruleIdObject = new ObjectId(req.params.id as string);
 
         // Lookup the rule using the provided ID combined with body filters (ensuring ownership)
-        const rule = await notificationRulesCollection.findOne({...req.body.filters, _id: ruleIdObject});
+        const rule = await notificationRulesCollection.findOne({...filters, _id: ruleIdObject});
 
         if (!rule) {
-            logger.warn(`Notification rule ${req.params.id} not found or unauthorized. UserId: ${req.body.userId}.`);
-            return res.status(404).json({error: `Notification rule ${req.params.id} not found or unauthorized.`});
+            logger.warn(`Notification rule ${id} not found or unauthorized. UserId: ${userId}.`);
+            return res.status(404).json({error: `Notification rule ${id} not found or unauthorized.`});
         }
 
-        logger.info(`Successfully fetched notification rule with ID: ${rule._id}. UserId: ${req.body.userId}`);
-        res.json(rule);
+        logger.info(`Successfully fetched notification rule with ID: ${rule._id}. UserId: ${userId}`);
+        return res.json(rule);
     } catch (err) {
-        logger.error(`Error fetching notification rule with ID ${req.params.id}. UserId: ${req.body.userId}: ${err}`);
-        res.status(500).json({error: "Failed to fetch notification rule"});
+        logger.error(`Error fetching notification rule with ID ${id}. UserId: ${userId}: ${err}`);
+        return res.status(500).json({error: "Failed to fetch notification rule"});
     }
 });
 
 // Update notification rule
 notificationRuleRouter.put("/:id", validateObjectId, async (req: UpdateRuleReq, res: Response) => {
-    try {
-        const ruleIdObject = new ObjectId(req.params.id as string);
-        const {id} = req.params;
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
+    const data = req.authContext?.data;
 
+    const {id} = req.params;
+    const ruleIdObject = new ObjectId(id as string);
+
+    try {
         // 1. Validate request body data against the partial update schema
-        const parseResult = NotificationRuleUpdateSchema.safeParse(req.body.data);
+        const parseResult = NotificationRuleUpdateSchema.safeParse(data);
         if (!parseResult.success) {
-            logger.warn(`Failed to update notification rule ${id} due to validation error: ${parseResult.error.issues}. UserId: ${req.body.userId}`);
+            logger.warn(`Failed to update notification rule ${id} due to validation error: ${parseResult.error.issues}. UserId: ${userId}`);
             return res.status(400).json({error: parseResult.error.issues});
         }
 
@@ -113,45 +127,49 @@ notificationRuleRouter.put("/:id", validateObjectId, async (req: UpdateRuleReq, 
         const update = {...updateData, updatedAt};
 
         // 3. Perform the update and get the updated document
-        // We use req.body.filters to ensure the user owns the rule being updated
+        // We use filters to ensure the user owns the rule being updated
         const updateNotificationRuleResult = await notificationRulesCollection.findOneAndUpdate(
-            {...req.body.filters, _id: ruleIdObject},
+            {...filters, _id: ruleIdObject},
             {$set: update},
             {returnDocument: 'after'}
         );
 
         if (!updateNotificationRuleResult) {
-            logger.warn(`NotificationRule with ID ${id} not found for update or unauthorized. UserId: ${req.body.userId}`);
+            logger.warn(`NotificationRule with ID ${id} not found for update or unauthorized. UserId: ${userId}`);
             return res.status(404).json({error: "Not found"});
         }
 
-        logger.info(`Successfully updated notification rule with ID: ${id} for user: ${updateNotificationRuleResult.userId}. UserId: ${req.body.userId}`);
-        res.json(updateNotificationRuleResult);
+        logger.info(`Successfully updated notification rule with ID: ${id} for user: ${updateNotificationRuleResult.userId}. UserId: ${userId}`);
+        return res.json(updateNotificationRuleResult);
     } catch (err) {
-        logger.error(`Error updating notification rule with ID ${req.params.id}. UserId: ${req.body.userId}: ${err}`);
-        res.status(500).json({error: "Failed to update notification rule"});
+        logger.error(`Error updating notification rule with ID ${id}. UserId: ${userId}: ${err}`);
+        return res.status(500).json({error: "Failed to update notification rule"});
     }
 });
 
 // Delete notification rule
 notificationRuleRouter.delete("/:id", validateObjectId, async (req: DeleteRuleReq, res: Response) => {
-    try {
-        const ruleIdObject = new ObjectId(req.params.id as string);
-        const {id} = req.params;
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
 
-        // Use req.body.filters combined with _id to ensure the user owns the rule
-        const result = await notificationRulesCollection.deleteOne({...req.body.filters, _id: ruleIdObject});
+    const {id} = req.params;
+    const ruleIdObject = new ObjectId(id as string);
+
+    try {
+
+        // Use filters combined with _id to ensure the user owns the rule
+        const result = await notificationRulesCollection.deleteOne({...filters, _id: ruleIdObject});
 
         if (result.deletedCount === 0) {
-            logger.warn(`Notification rule with ID ${id} not found for deletion or unauthorized. UserId: ${req.body.userId}`);
+            logger.warn(`Notification rule with ID ${id} not found for deletion or unauthorized. UserId: ${userId}`);
             return res.status(404).json({error: "Not found or unauthorized"});
         }
 
-        logger.info(`Successfully deleted notification rule with ID: ${id}. UserId: ${req.body.userId}`);
-        res.json({message: "Deleted successfully"});
+        logger.info(`Successfully deleted notification rule with ID: ${id}. UserId: ${userId}`);
+        return res.json({message: "Deleted successfully"});
     } catch (err) {
-        logger.error(`Error deleting notification rule with ID ${req.params.id}. UserId: ${req.body.userId}: ${err}`);
-        res.status(500).json({error: "Failed to delete notification rule"});
+        logger.error(`Error deleting notification rule with ID ${id}. UserId: ${userId}: ${err}`);
+        return res.status(500).json({error: "Failed to delete notification rule"});
     }
 });
 

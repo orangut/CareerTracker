@@ -13,6 +13,7 @@ import {jobApplicationsCollection} from "../models/jobApplication";
 import {validateObjectId} from "../middleware/validateObjectId";
 import logger from '../config/logger';
 import {MyRequestType} from '../types';
+import {separateUserIdFilterObject} from "../utils";
 
 const stageRouter = Router();
 
@@ -26,10 +27,13 @@ type DeleteStageReq = MyRequestType<Stage>;
 
 // Create Stage
 stageRouter.post('/', async (req: CreateStageReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const data = req.authContext?.data;
+
     try {
-        const parseResult = StageCreateSchema.safeParse(req.body.data);
+        const parseResult = StageCreateSchema.safeParse(data);
         if (!parseResult.success) {
-            logger.warn(`Failed to create stage due to validation error: ${parseResult.error}. UserId: ${req.body.userId}`);
+            logger.warn(`Failed to create stage due to validation error: ${parseResult.error}. UserId: ${userId}`);
             return res.status(400).json({error: parseResult.error});
         }
 
@@ -59,44 +63,67 @@ stageRouter.post('/', async (req: CreateStageReq, res: Response) => {
             }
         });
 
-        logger.info(`Successfully created new stage with ID: ${newStage._id} for job application: ${jobApplicationId}. UserId: ${req.body.userId}`);
+        logger.info(`Successfully created new stage with ID: ${newStage._id} for job application: ${jobApplicationId}. UserId: ${userId}`);
         res.status(201).json(newStage);
     } catch (err) {
-        logger.error(`Error creating stage for job application ${req.body.data?.jobApplicationId}: ${err}`);
+        logger.error(`Error creating stage for job application ${data?.jobApplicationId}: ${err}`);
         res.status(500).json({error: "Failed to create stage"});
     }
 });
 
 // Get stage by id
 stageRouter.get("/:id", validateObjectId, async (req: GetStageReq, res: Response) => {
-    try {
-        const stageIdObject = new ObjectId(req.params.id as string);
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
+    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(filters)
 
+    const {id} = req.params;
+    const stageIdObject = new ObjectId(id as string);
+
+    try {
         // Lookup the stage using the provided ID and body filters
-        const stage = await stagesCollection.findOne({...req.body.filters, _id: stageIdObject});
+        const stage = await stagesCollection.findOne({...otherFilters, _id: stageIdObject});
 
         if (!stage) {
-            logger.warn(`Stage ${req.params.id} not found or unauthorized. UserId: ${req.body.userId}.`);
-            return res.status(404).json({error: `Stage ${req.params.id} not found or unauthorized.`});
+            logger.warn(`Stage ${id} not found or unauthorized. UserId: ${userId}.`);
+            return res.status(404).json({error: `Stage ${id} not found or unauthorized.`});
         }
 
-        logger.info(`Successfully fetched stage with ID: ${stage._id}. UserId: ${req.body.userId}`);
+        const jobApplication = await jobApplicationsCollection.findOne({
+            userId: extractedUserId,
+            _id: stage?.jobApplicationId
+        })
+
+        if (!jobApplication) {
+            logger.warn(`Stage ${id} not found or unauthorized. UserId: ${userId}.`);
+            return res.status(404).json({error: `Stage ${id} not found or unauthorized.`});
+        }
+
+        logger.info(`Successfully fetched stage with ID: ${stage._id}. UserId: ${userId}`);
         res.json(stage);
     } catch (err) {
-        logger.error(`Error fetching stage with ID ${req.params.id}: ${err}. UserId: ${req.body.userId}`);
+        logger.error(`Error fetching stage with ID ${id}: ${err}. UserId: ${userId}`);
         res.status(500).json({error: "Failed to fetch stage"});
     }
 });
 
 // Update stage
 stageRouter.put("/:id", validateObjectId, async (req: UpdateStageReq, res: Response) => {
-    try {
-        const stageIdObject = new ObjectId(req.params.id as string);
+    const userId = req?.authContext?.userId;
 
+    const filters = req?.authContext?.filters;
+    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(filters)
+
+    const data = req.authContext?.data;
+
+    const {id} = req.params;
+    const stageIdObject = new ObjectId(id as string);
+
+    try {
         // 1. Validate incoming data
-        const parseResult = StageUpdateSchema.safeParse(req.body.data);
+        const parseResult = StageUpdateSchema.safeParse(data);
         if (!parseResult.success) {
-            logger.warn(`Failed to update stage ${req.params.id} due to validation error: ${parseResult.error.issues}. UserId: ${req.body.userId}`);
+            logger.warn(`Failed to update stage ${id} due to validation error: ${parseResult.error.issues}. UserId: ${userId}`);
             return res.status(400).json({error: parseResult.error.issues});
         }
 
@@ -106,13 +133,13 @@ stageRouter.put("/:id", validateObjectId, async (req: UpdateStageReq, res: Respo
 
         // 2. Perform the update and get the updated document
         const updatedStageResult = await stagesCollection.findOneAndUpdate(
-            {...req.body.filters, _id: stageIdObject},
+            {...otherFilters, _id: stageIdObject},
             {$set: update},
             {returnDocument: 'after'}
         );
 
         if (!updatedStageResult) {
-            logger.warn(`Stage with ID ${req.params.id} not found for update. UserId: ${req.body.userId}`);
+            logger.warn(`Stage with ID ${id} not found for update. UserId: ${userId}`);
             return res.status(404).json({error: "Not found"});
         }
 
@@ -121,35 +148,41 @@ stageRouter.put("/:id", validateObjectId, async (req: UpdateStageReq, res: Respo
         // 3. Update the updateAt in JobApplication
         await jobApplicationsCollection.updateOne({_id: jobApplicationId}, {$set: {updatedAt}});
 
-        logger.info(`Successfully updated stage with ID: ${req.params.id} for job application: ${jobApplicationId}. UserId: ${req.body.userId}`);
+        logger.info(`Successfully updated stage with ID: ${id} for job application: ${jobApplicationId}. UserId: ${userId}`);
         res.json(updatedStageResult);
     } catch (err) {
-        logger.error(`Error updating stage with ID ${req.params.id}: ${err}. UserId: ${req.body.userId}`);
+        logger.error(`Error updating stage with ID ${id}: ${err}. UserId: ${userId}`);
         res.status(500).json({error: "Failed to update stage"});
     }
 });
 
 // Delete stage
 stageRouter.delete("/:id", validateObjectId, async (req: DeleteStageReq, res: Response) => {
-    try {
-        const stageObjectId = new ObjectId(req.params.id as string);
+    const userId = req?.authContext?.userId;
 
+    const filters = req?.authContext?.filters;
+    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(filters)
+
+    const {id} = req.params;
+    const stageObjectId = new ObjectId(id as string);
+
+    try {
         // 1. Get the stage before deleting it to find the jobApplicationId
-        const stageToDelete = await stagesCollection.findOne({...req.body.filters, _id: stageObjectId});
+        const stageToDelete = await stagesCollection.findOne({...otherFilters, _id: stageObjectId});
 
         if (!stageToDelete) {
-            logger.warn(`Stage with ID ${req.params.id} not found for deletion. UserId: ${req.body.userId}`);
+            logger.warn(`Stage with ID ${id} not found for deletion. UserId: ${userId}`);
             return res.status(404).json({error: "Not found"});
         }
 
         const jobApplicationId = stageToDelete.jobApplicationId;
 
-        // 2. Delete the stage using req.body.filters
-        const result = await stagesCollection.deleteOne({...req.body.filters, _id: stageObjectId});
+        // 2. Delete the stage using filters
+        const result = await stagesCollection.deleteOne({...filters, _id: stageObjectId});
 
         if (result.deletedCount === 0) {
             // Redundant check, but safe
-            logger.warn(`Stage with ID ${req.params.id} not found for deletion in job application ${jobApplicationId}. UserId: ${req.body.userId}`);
+            logger.warn(`Stage with ID ${id} not found for deletion in job application ${jobApplicationId}. UserId: ${userId}`);
             return res.status(404).json({error: "Not found"});
         }
 
@@ -169,13 +202,13 @@ stageRouter.delete("/:id", validateObjectId, async (req: DeleteStageReq, res: Re
             {$set: {lastStageId, updatedAt}}
         );
 
-        logger.info(`Successfully deleted stage with ID: ${req.params.id} for job application: ${jobApplicationId}. New last stage ID is ${lastStageId}. UserId: ${req.body.userId}`);
+        logger.info(`Successfully deleted stage with ID: ${id} for job application: ${jobApplicationId}. New last stage ID is ${lastStageId}. UserId: ${userId}`);
         res.json({
             message: "Deleted successfully",
             lastStageId: lastStageId?.toHexString()
         });
     } catch (err) {
-        logger.error(`Error deleting stage with ID ${req.params.id}: ${err}. UserId: ${req.body.userId}`);
+        logger.error(`Error deleting stage with ID ${id}: ${err}. UserId: ${userId}`);
         res.status(500).json({error: "Failed to delete stage"});
     }
 });

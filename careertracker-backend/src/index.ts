@@ -6,6 +6,7 @@ import cors from 'cors';
 // Import Swagger libraries
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import YAML from 'yamljs'
 
 // Import your custom routes
 import apiRouter from './routes';
@@ -35,40 +36,21 @@ app.use(express.json());
 // Middleware for push token auth with cookie to the frontend
 app.use(cookieParser());
 
-// --- Swagger/OpenAPI configuration ---
+
+const rootDefinition = YAML.load(path.join(__dirname, './routes/swagger/openapi.swagger.yaml'));
+
+
 const swaggerOptions = {
-    definition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'Career Tracker API',
-            version: '1.0.0',
-            description: 'API for tracking job applications',
-        },
-        servers: [
-            { url: 'http://localhost:3000' },
-        ],
-        components: {
-            securitySchemes: {
-                cookieAuth: {
-                    type: 'apiKey',
-                    in: 'cookie',
-                    name: 'userId',
-                },
-            },
-        },
-        // Apply globally to all paths
-        security: [
-            { cookieAuth: [] }
-        ],
-    },
+    // 1. Use the content loaded from the new YAML file
+    definition: rootDefinition,
+    // 2. Keep the 'apis' array to tell swagger-jsdoc which other files to merge
     apis: [
         path.join(__dirname, './routes/swagger/*.yaml'),
     ],
 };
 
-
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+// --- Your existing code, now using the dynamic options ---
+const swaggerSpec = swaggerJsdoc(swaggerOptions); // Note: You must pass swaggerOptions here!
 
 // This logger.info will confirm the resolved path. Check your log file!
 logger.info(`Resolved Swagger API path: ${path.join(__dirname, './routes/swagger/*.yaml')}`);

@@ -6,23 +6,25 @@ import { Logger } from 'winston';
 
 /**
  * Fetches all notification rules visible to the calling user.
- * Uses POST to send role-based filters in the body payload.
+ * 🐛 FIX: Switched from POST to GET and sends filters as URL query parameters.
  */
 export const getAllNotificationRules = (apiClient: AxiosInstance, logger: Logger) => async (
     callingUserId: string, // The ID of the user making the request (for auth context)
     filters: Filters<NotificationRule> = {} // Role-based authorization filters provided by backend
 ): Promise<NotificationRule[]> => {
     try {
-        const payload: MyRequestBody<NotificationRule> = {
+        // Construct query parameters for the GET request
+        const params = {
             userId: callingUserId,
-            filters: filters // Pass role-based filters
+            // Stringify complex filters for safe transmission in the URL query string
+            filters: JSON.stringify(filters)
         };
 
         const url = `${apiClient.defaults.baseURL}${BASE_PATH_NOTIFICATION_RULES}`;
         logger.info(`Requesting all notification rules for context user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
 
-        // Use POST to securely send the filters payload
-        const response = await apiClient.post<NotificationRule[]>(`${BASE_PATH_NOTIFICATION_RULES}`, payload);
+        // Use GET with the 'params' configuration
+        const response = await apiClient.get<NotificationRule[]>(`${BASE_PATH_NOTIFICATION_RULES}`, { params });
         logger.info(`Successfully fetched all notification rules for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
@@ -33,7 +35,7 @@ export const getAllNotificationRules = (apiClient: AxiosInstance, logger: Logger
 
 /**
  * Fetches a single notification rule by its ID.
- * Authorization context and filters are sent in the body payload.
+ * 🐛 FIX: Switched from POST to GET and sends context/filters as URL query parameters.
  */
 export const getNotificationRuleById = (apiClient: AxiosInstance, logger: Logger) => async (
     callingUserId: string,
@@ -41,17 +43,19 @@ export const getNotificationRuleById = (apiClient: AxiosInstance, logger: Logger
     filters: Filters<NotificationRule> = {} // Role-based authorization filters provided by backend
 ): Promise<NotificationRule> => {
     try {
-        const payload: MyRequestBody<NotificationRule> = {
+        // Construct query parameters for the GET request
+        const params = {
             userId: callingUserId,
-            filters: filters // Pass role-based filters
+            // Stringify complex filters for safe transmission in the URL query string
+            filters: JSON.stringify(filters)
         };
 
         const path = `${BASE_PATH_NOTIFICATION_RULES}/${ruleId}`;
         const url = `${apiClient.defaults.baseURL}${path}`;
         logger.info(`Requesting notification rule with ID: ${ruleId} for user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
 
-        // Use POST to send the authorization context
-        const response = await apiClient.post<NotificationRule>(path, payload);
+        // Use GET with the 'params' configuration
+        const response = await apiClient.get<NotificationRule>(path, { params });
         logger.info(`Successfully fetched notification rule with ID: ${ruleId} for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
@@ -61,7 +65,7 @@ export const getNotificationRuleById = (apiClient: AxiosInstance, logger: Logger
 };
 
 /**
- * Creates a new notification rule.
+ * Creates a new notification rule. (Correctly uses POST)
  * The data payload is wrapped in MyRequestBody; filters are empty.
  */
 export const createNotificationRule = (apiClient: AxiosInstance, logger: Logger) => async (
@@ -89,7 +93,7 @@ export const createNotificationRule = (apiClient: AxiosInstance, logger: Logger)
 };
 
 /**
- * Updates an existing notification rule.
+ * Updates an existing notification rule. (Correctly uses PUT)
  * Authorization filters are passed along with the update data.
  */
 export const updateNotificationRule = (apiClient: AxiosInstance, logger: Logger) => async (
@@ -120,7 +124,7 @@ export const updateNotificationRule = (apiClient: AxiosInstance, logger: Logger)
 };
 
 /**
- * Deletes a notification rule by its ID.
+ * Deletes a notification rule by its ID. (Correctly uses DELETE)
  * Authorization filters are sent in the body payload via Axios's delete config.
  */
 export const deleteNotificationRule = (apiClient: AxiosInstance, logger: Logger) => async (

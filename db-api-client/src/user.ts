@@ -30,16 +30,19 @@ export const getUsers = (apiClient: AxiosInstance, logger: Logger) => async (
     filters: Filters<User> = {} // Role-based authorization filters provided by backend
 ): Promise<User[] | null> => {
     try {
-        const payload: MyRequestBody<User> = {
-            // The requesting user ID is mandatory for the Mongo API's security layer
-            userId: callingUserId,
-            filters: filters // Pass role-based filters
-        };
-        const url = `${apiClient.defaults.baseURL}${BASE_PATH_USERS}`;
-        logger.info(`Requesting all users from URL: ${url} with context user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
+        const url = `${BASE_PATH_USERS}`;
 
-        // Using POST to securely send the MyRequestBody payload (filters/context)
-        const response = await apiClient.post<User[]>(`${BASE_PATH_USERS}`, payload);
+        // Prepare query parameters
+        const params = {
+            userId: callingUserId,
+            // Filters must be stringified to be safely transmitted in the URL
+            filters: JSON.stringify(filters)
+        };
+
+        logger.info(`Requesting all users with context user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
+
+        // Use GET and pass parameters in the config object
+        const response = await apiClient.get<User[]>(url, { params });
         logger.info(`Successfully fetched all users.`);
         return response.data;
     } catch (error) {
@@ -59,18 +62,23 @@ export const getByUsername = (apiClient: AxiosInstance, logger: Logger) => async
 ): Promise<User | null> => {
     try {
         // We merge the required username lookup filter with the authorization filters
-        const filters: Filters<User> = { ...authFilters, username };
-        const payload: MyRequestBody<User> = {
+        const combinedFilters: Filters<User> = { ...authFilters, username };
+
+        // Use a path that reflects the lookup method (or the base path if using a generic query param)
+        // I will use the path `/username/${username}` and pass the auth context in params.
+        const path = `${BASE_PATH_USERS}/username/${username}`;
+
+        // Prepare query parameters
+        const params = {
             userId: callingUserId,
-            filters: filters
+            // Filters must be stringified to be safely transmitted in the URL
+            filters: JSON.stringify(combinedFilters)
         };
 
-        // Assuming the Mongo API uses a generic POST path for findOne/query operations
-        const queryPath = `${BASE_PATH_USERS}/username/${username}`;
-        logger.info(`Requesting user by username: ${username} for context user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
+        logger.info(`Requesting user by username: ${username} for context user: ${callingUserId}. Filters: ${JSON.stringify(combinedFilters)}`);
 
-        // Using POST to carry the combined filter payload
-        const response = await apiClient.post<User | null>(queryPath, payload);
+        // Use GET and pass parameters in the config object
+        const response = await apiClient.get<User | null>(path, { params });
         logger.info(`Successfully fetched user by username: ${username}`);
         return response.data;
     } catch (error) {
@@ -89,17 +97,19 @@ export const getUserById = (apiClient: AxiosInstance, logger: Logger) => async (
     filters: Filters<User> = {} // Role-based authorization filters provided by backend
 ): Promise<User> => {
     try {
-        const payload: MyRequestBody<User> = {
+        const path = `${BASE_PATH_USERS}/${targetUserId}`;
+
+        // Prepare query parameters
+        const params = {
             userId: callingUserId,
-            filters: filters // Pass role-based filters
+            // Filters must be stringified to be safely transmitted in the URL
+            filters: JSON.stringify(filters)
         };
 
-        const path = `${BASE_PATH_USERS}/${targetUserId}`;
-        const url = `${apiClient.defaults.baseURL}${path}`;
-        logger.info(`Requesting user by ID: ${targetUserId} from URL: ${url} with context user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
+        logger.info(`Requesting user by ID: ${targetUserId} with context user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
 
-        // Using POST to send the MyRequestBody payload
-        const response = await apiClient.post<User>(path, payload);
+        // Use GET and pass parameters in the config object
+        const response = await apiClient.get<User>(path, { params });
         logger.info(`Successfully fetched user by ID: ${targetUserId}`);
         return response.data;
     } catch (error) {

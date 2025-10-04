@@ -8,6 +8,9 @@ import {User} from "./index"; // Assuming your user interface is imported here
 
 const userRouter = Router();
 
+
+// FIXME: handle permission from here (and not from mongo-api) - because the permission depend in userId, and we have the userId.
+
 // ====================================================================
 // 1. GET /me (Retrieve current authenticated user's profile)
 // ====================================================================
@@ -208,26 +211,26 @@ userRouter.put('/:targetUserId', async (req: FilterMiddlewareRequest<User>, res:
 // 7. DELETE /:targetUserId (Delete a user profile)
 // ====================================================================
 userRouter.delete('/:targetUserId', async (req: FilterMiddlewareRequest<User>, res: Response) => {
-    const {userId: callingUserId, filters} = req;
+    const {userId, filters} = req;
     const {targetUserId} = req.params;
     try {
-        if (!callingUserId) {
+        if (!userId) {
             logger.warn(`Unauthorized attempt to delete user ${targetUserId}.`);
             return res.status(403).send('Not authorized');
         }
 
-        logger.info(`Attempting to delete user ${targetUserId} by caller: ${callingUserId}`);
-        const deleted = await dbClient.users.delete(targetUserId, callingUserId, filters);
+        logger.info(`Attempting to delete user ${targetUserId} by caller: ${userId}`);
+        const deleted = await dbClient.users.delete(targetUserId, userId, filters);
 
         if (deleted === null) {
             logger.warn(`Deletion failed: User ID: ${targetUserId} not found or delete failed.`);
             return res.status(404).json({error: 'User not found or delete failed.'});
         }
 
-        logger.info(`Successfully deleted user ${targetUserId} by caller: ${callingUserId}`);
+        logger.info(`Successfully deleted user ${targetUserId} by caller: ${userId}`);
         return res.status(200).json({message: 'User deleted successfully.'});
     } catch (error) {
-        logger.error(`Failed to delete user ${targetUserId} for caller: ${callingUserId}.`, {error});
+        logger.error(`Failed to delete user ${targetUserId} for caller: ${userId}.`, {error});
         return res.status(500).json({error: 'Failed to delete user profile.'});
     }
 });

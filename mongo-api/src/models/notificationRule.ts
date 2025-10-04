@@ -31,7 +31,7 @@ export const NotificationRuleSchema = z.object({
     updatedAt: z.coerce.date(),
 });
 
-export const NotificationRuleCreateSchema = NotificationRuleSchema.omit({
+export const NotificationRuleCreateSchema = NotificationRuleSchema.pick({
     userId: true,
     offsetMs: true,
 })

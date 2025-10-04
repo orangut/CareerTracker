@@ -1,0 +1,15 @@
+openapi: 3.0.0
+info:
+  title: Career Tracker API
+  version: 1.0.0
+  description: API for tracking job applications
+servers:
+  - url: http://localhost:3000
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: userId
+security:
+  - cookieAuth: []

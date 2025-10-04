@@ -51,16 +51,19 @@ export const getAllJobApplications = (apiClient: AxiosInstance, logger: Logger) 
     filters: Filters<JobApplication> = {} // Role-based authorization filters provided by backend
 ): Promise<JobApplicationPopulatedStage[] | null> => {
     try {
-        const payload: MyRequestBody<JobApplication> = {
+        const url = `${BASE_PATH_JOB_APPLICATION}`;
+
+        // Prepare query parameters
+        const params = {
             userId: callingUserId,
-            filters: filters // Pass role-based filters
+            // Filters must be stringified to be safely transmitted in the URL
+            filters: JSON.stringify(filters)
         };
 
-        const url = `${apiClient.defaults.baseURL}${BASE_PATH_JOB_APPLICATION}`;
-        logger.info(`Requesting all job applications for context user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
+        logger.info(`Requesting all job applications for user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
 
-        // Use POST to securely send the filters payload
-        const response = await apiClient.post<JobApplicationPopulatedStage[]>(BASE_PATH_JOB_APPLICATION, payload);
+        // Use GET and pass parameters in the config object
+        const response = await apiClient.get<JobApplicationPopulatedStage[]>(url, { params });
         logger.info(`Successfully fetched all job applications for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
@@ -79,17 +82,19 @@ export const getJobApplicationById = (apiClient: AxiosInstance, logger: Logger) 
     filters: Filters<JobApplication> = {} // Role-based authorization filters provided by backend
 ): Promise<JobApplicationPopulatedStage | null> => {
     try {
-        const payload: MyRequestBody<JobApplication> = {
+        const path = `${BASE_PATH_JOB_APPLICATION}/${applicationId}`;
+
+        // Prepare query parameters
+        const params = {
             userId: callingUserId,
-            filters: filters // Pass role-based filters
+            // Filters must be stringified to be safely transmitted in the URL
+            filters: JSON.stringify(filters)
         };
 
-        const path = `${BASE_PATH_JOB_APPLICATION}/${applicationId}`;
-        const url = `${apiClient.defaults.baseURL}${path}`;
-        logger.info(`Requesting job application with ID: ${applicationId} for user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
+        logger.info(`Requesting job application with ID: ${applicationId} for user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
 
-        // Use POST to send the authorization context
-        const response = await apiClient.post<JobApplicationPopulatedStage>(path, payload);
+        // Use GET and pass parameters in the config object
+        const response = await apiClient.get<JobApplicationPopulatedStage>(path, { params });
         logger.info(`Successfully fetched job application with ID: ${applicationId} for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
@@ -108,18 +113,19 @@ export const getStagesByJobApplicationId = (apiClient: AxiosInstance, logger: Lo
     filters: Filters<JobApplication> = {} // Filters must check authorization on the PARENT resource (JobApplication)
 ): Promise<Stage[] | null> => {
     try {
-        const payload: MyRequestBody<JobApplication> = {
+        const path = `${BASE_PATH_JOB_APPLICATION}/${applicationId}/stages`;
+
+        // Prepare query parameters
+        const params = {
             userId: callingUserId,
-            filters: filters // Pass role-based filters
+            // Filters must be stringified to be safely transmitted in the URL
+            filters: JSON.stringify(filters)
         };
 
-        const path = `${BASE_PATH_JOB_APPLICATION}/${applicationId}/stages`;
-        const url = `${apiClient.defaults.baseURL}${path}`;
-        logger.info(`Requesting stages for job application ID: ${applicationId} for user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
+        logger.info(`Requesting stages for job application ID: ${applicationId} for user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
 
-        // Use POST to send the authorization context
-        // The path reflects the nested RESTful route: /jobapplications/{id}/stages
-        const response = await apiClient.post<Stage[]>(path, payload);
+        // Use GET and pass parameters in the config object
+        const response = await apiClient.get<Stage[]>(path, { params });
         logger.info(`Successfully fetched stages for job application ID: ${applicationId} for user: ${callingUserId}`);
         return response.data;
     } catch (error) {

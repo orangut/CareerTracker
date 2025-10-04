@@ -8,16 +8,19 @@ import {
     JobApplicationUpdateData,
     JobApplicationUpdateSchema
 } from "../models/jobApplication";
-import {stagesCollection} from "../models/stage"; // Assuming Stage model is imported here
+import {Stage, stagesCollection} from "../models/stage"; // Assuming Stage model is imported here
 import logger from "../config/logger";
 import {MyRequestType} from '../types';
 import {validateObjectId} from "../middleware/validateObjectId";
+import {separateUserIdFilterObject} from "../utils";
+import stage from "./stage";
 
 const jobApplicationRoute = Router();
 
 // --- TYPE ALIASES (F=JobApplication, D=DataPayload) ---
 type CreateAppReq = MyRequestType<JobApplication, JobApplicationCreateData>;
 type GetAppReq = MyRequestType<JobApplicationPopulatedStage>;
+type GetStagesAppReq = MyRequestType<Stage>
 type UpdateAppReq = MyRequestType<JobApplication, JobApplicationUpdateData>;
 type DeleteAppReq = MyRequestType<JobApplication>;
 
@@ -44,12 +47,14 @@ const populateLastStage = async (app: WithId<JobApplication>): Promise<WithId<Jo
 
 // Create Job Application
 jobApplicationRoute.post("/", async (req: CreateAppReq, res: Response) => {
+    const userId = req.authContext?.userId;
+    const data = req.authContext?.data;
+
     try {
-        // 1. VALIDATION: Validate user input against the creation schema
-        const parseResult = JobApplicationCreateSchema.safeParse(req.body.data);
+        const parseResult = JobApplicationCreateSchema.safeParse(data);
 
         if (!parseResult.success) {
-            logger.warn(`User ${req.body.userId}: Failed to create job application due to validation error: ${parseResult.error.issues}`);
+            logger.warn(`User ${userId}: Failed to create job application due to validation error: ${parseResult.error.issues}`);
             return res.status(400).json({error: parseResult.error.issues});
         }
 
@@ -57,78 +62,90 @@ jobApplicationRoute.post("/", async (req: CreateAppReq, res: Response) => {
         const now = new Date();
 
         // 2. Build the full document for insertion (including server-managed fields)
-        const data: Omit<JobApplication, '_id'> = {
+        const jobApplicationData: Omit<JobApplication, '_id'> = {
             ...userData,
             createdAt: now,
             updatedAt: now
         };
 
-        const result = await jobApplicationsCollection.insertOne(data);
+        const result = await jobApplicationsCollection.insertOne(jobApplicationData);
         const newApplication: WithId<JobApplication> = {
             _id: result.insertedId,
-            ...data
+            ...jobApplicationData
         };
 
-        logger.info(`User ${req.body.userId}: Successfully created new job application with ID: ${result.insertedId}`);
+        logger.info(`User ${userId}: Successfully created new job application with ID: ${result.insertedId}`);
         res.status(201).json(newApplication);
     } catch (err) {
-        logger.error(`Error creating job application for user ${req.body.userId}: ${err}`);
+        logger.error(`Error creating job application for user ${userId}: ${err}`);
         res.status(500).json({error: "Failed to create job application"});
     }
 });
 
 // Get all job applications for user (populated stage)
 jobApplicationRoute.get("/", async (req: GetAppReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
+
     try {
         // Find applications using the filters provided (ensures ownership)
-        const apps = await jobApplicationsCollection.find(req.body.filters || {}).toArray();
+        const apps = await jobApplicationsCollection.find(filters || {}).toArray();
 
         // FIX: Use Promise.all to ensure all asynchronous stage lookups complete
         const populatedApps = await Promise.all(
             apps.map(app => populateLastStage(app))
         );
 
-        logger.info(`Successfully fetched ${apps.length} job applications. UserId: ${req.body.userId}`);
+        logger.info(`Successfully fetched ${apps.length} job applications. UserId: ${userId}`);
         res.json(populatedApps);
     } catch (err) {
-        logger.error(`Error fetching job applications for user ${req.body.userId}: ${err}`);
+        logger.error(`Error fetching job applications for user ${userId}: ${err}`);
         res.status(500).json({error: "Failed to fetch job applications"});
     }
 });
 
 // Get single job application by ID (populated stage)
-jobApplicationRoute.get("/:jobId", validateObjectId, async (req: GetAppReq, res: Response) => {
-    try {
-        const appIdObject = new ObjectId(req.params.jobId as string);
+jobApplicationRoute.get("/:id", validateObjectId, async (req: GetAppReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
 
-        const app = await jobApplicationsCollection.findOne({...req.body.filters, _id: appIdObject});
+    const {id} = req.params;
+    const appIdObject = new ObjectId(id as string);
+
+    try {
+        const app = await jobApplicationsCollection.findOne({...filters, _id: appIdObject});
 
         if (!app) {
-            logger.warn(`Job application ${req.params.jobId} not found or unauthorized. UserId: ${req.body.userId}.`);
+            logger.warn(`Job application ${id} not found or unauthorized. UserId: ${userId}.`);
             return res.status(404).json({error: "Job application not found or unauthorized."});
         }
 
         // Populate the last stage
         const populatedApp = await populateLastStage(app);
 
-        logger.info(`Successfully fetched job application with ID: ${app._id}. UserId: ${req.body.userId}`);
+        logger.info(`Successfully fetched job application with ID: ${app._id}. UserId: ${userId}`);
         res.json(populatedApp);
     } catch (err) {
-        logger.error(`Error fetching job application with ID ${req.params.jobId}. UserId: ${req.body.userId}: ${err}`);
+        logger.error(`Error fetching job application with ID ${id}. UserId: ${userId}: ${err}`);
         res.status(500).json({error: "Failed to fetch job application"});
     }
 });
 
 // Update job application
-jobApplicationRoute.put("/:jobId", validateObjectId, async (req: UpdateAppReq, res: Response) => {
-    try {
-        const appIdObject = new ObjectId(req.params.jobId as string);
-        const id = req.params.jobId;
+jobApplicationRoute.put("/:id", validateObjectId, async (req: UpdateAppReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
 
+    const {id} = req.params;
+    const appIdObject = new ObjectId(id as string);
+
+    const data = req.authContext?.data;
+
+    try {
         // 1. VALIDATION: Validate user input against the update schema
-        const parseResult = JobApplicationUpdateSchema.safeParse(req.body.data);
+        const parseResult = JobApplicationUpdateSchema.safeParse(data);
         if (!parseResult.success) {
-            logger.warn(`Failed to update job application ${id} due to validation error: ${parseResult.error.issues}. UserId: ${req.body.userId}`);
+            logger.warn(`Failed to update job application ${id} due to validation error: ${parseResult.error.issues}. UserId: ${userId}`);
             return res.status(400).json({error: parseResult.error.issues});
         }
 
@@ -139,50 +156,80 @@ jobApplicationRoute.put("/:jobId", validateObjectId, async (req: UpdateAppReq, r
         const update = {...updateData, updatedAt};
 
         // 3. Perform the update and get the updated document
-        // Use req.body.filters to ensure user ownership
+        // Use filters to ensure user ownership
         const updateJobApplicationResult = await jobApplicationsCollection.findOneAndUpdate(
-            {...req.body.filters, _id: appIdObject},
+            {...filters, _id: appIdObject},
             {$set: update},
             {returnDocument: 'after'}
         );
 
         if (!updateJobApplicationResult) {
-            logger.warn(`JobApplication with ID ${id} not found for update or unauthorized. UserId: ${req.body.userId}`);
+            logger.warn(`JobApplication with ID ${id} not found for update or unauthorized. UserId: ${userId}`);
             return res.status(404).json({error: "Not found"});
         }
 
         // Return the updated application document
-        logger.info(`Successfully updated job application with ID: ${id}. UserId: ${req.body.userId}`);
+        logger.info(`Successfully updated job application with ID: ${id}. UserId: ${userId}`);
         res.json(updateJobApplicationResult);
     } catch (err) {
-        logger.error(`Error updating job application with ID ${req.params.jobId}. UserId: ${req.body.userId}: ${err}`);
+        logger.error(`Error updating job application with ID ${id}. UserId: ${userId}: ${err}`);
         res.status(500).json({error: "Failed to update job application"});
     }
 });
 
 // Delete job application
-jobApplicationRoute.delete("/:jobId", validateObjectId, async (req: DeleteAppReq, res: Response) => {
-    try {
-        const appIdObject = new ObjectId(req.params.jobId as string);
-        const id = appIdObject;
+jobApplicationRoute.delete("/:id", validateObjectId, async (req: DeleteAppReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
 
-        // Use req.body.filters combined with _id to ensure the user owns the application
-        const result = await jobApplicationsCollection.deleteOne({...req.body.filters, _id: id});
+    const {id} = req.params;
+    const appIdObject = new ObjectId(id as string);
+
+    try {
+        // Use filters combined with _id to ensure the user owns the application
+        const result = await jobApplicationsCollection.deleteOne({...filters, _id: appIdObject});
 
         if (result.deletedCount === 0) {
-            logger.warn(`Job application with ID ${req.params.jobId} not found for deletion or unauthorized. UserId: ${req.body.userId}`);
+            logger.warn(`Job application with ID ${id} not found for deletion or unauthorized. UserId: ${userId}`);
             return res.status(404).json({error: "Not found or unauthorized"});
         }
 
         // Delete related stages (using the job application ID)
-        const stagesResult = await stagesCollection.deleteMany({jobApplicationId: id});
+        const stagesResult = await stagesCollection.deleteMany({jobApplicationId: appIdObject});
 
-        logger.info(`Successfully deleted job application with ID: ${req.params.jobId} and ${stagesResult.deletedCount} related stages. UserId: ${req.body.userId}`);
+        logger.info(`Successfully deleted job application with ID: ${id} and ${stagesResult.deletedCount} related stages. UserId: ${userId}`);
         res.json({message: "Deleted successfully"});
     } catch (err) {
-        logger.error(`Error deleting job application with ID ${req.params.jobId}. UserId: ${req.body.userId}: ${err}`);
+        logger.error(`Error deleting job application with ID ${id}. UserId: ${userId}: ${err}`);
         res.status(500).json({error: "Failed to delete job application"});
     }
 });
+
+jobApplicationRoute.get("/:id/stages", validateObjectId, async (req: GetStagesAppReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
+    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(filters)
+
+    const {id} = req.params;
+    const appIdObject = new ObjectId(id as string);
+
+    try {
+        const app = await jobApplicationsCollection.findOne({userId: extractedUserId, _id: appIdObject});
+
+        if (!app) {
+            logger.warn(`Job application ${id} not found or unauthorized. UserId: ${userId}.`);
+            return res.status(404).json({error: "Job application not found or unauthorized."});
+        }
+
+        const stages = await stagesCollection.findOne({...otherFilters, jobApplicationId: appIdObject});
+
+        logger.info(`Successfully fetched ${stage.length} stages for jobApplication: ${id}. UserId: ${userId}`);
+        res.json(stages);
+    } catch (err) {
+        logger.error(`Error fetching job application with ID ${id}. UserId: ${userId}: ${err}`);
+        res.status(500).json({error: "Failed to fetch job application"});
+    }
+});
+
 
 export default jobApplicationRoute;

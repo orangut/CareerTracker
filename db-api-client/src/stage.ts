@@ -15,17 +15,20 @@ export const getStageById = (apiClient: AxiosInstance, logger: Logger) => async 
     filters: Filters<Stage> = {} // Role-based authorization filters provided by backend
 ): Promise<Stage> => {
     try {
-        const payload: MyRequestBody<Stage> = {
+        // Construct query parameters for the GET request
+        const params = {
             userId: callingUserId,
-            filters: filters // Pass role-based filters
+            // Stringify complex filters for safe transmission in the URL query string
+            filters: JSON.stringify(filters)
         };
 
         const path = `${BASE_PATH_STAGES}/${stageId}`;
         const url = `${apiClient.defaults.baseURL}${path}`;
         logger.info(`Requesting stage with ID: ${stageId} for user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
 
-        // Use POST to send the authorization context
-        const response = await apiClient.post<Stage>(path, payload);
+        // Use GET to send the parameters via query string
+        const response = await apiClient.get<Stage>(path, { params });
+
         logger.info(`Successfully fetched stage with ID: ${stageId} for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
