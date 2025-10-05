@@ -1,68 +1,124 @@
-tags:
-  - name: Auth
-    description: User authentication and registration
+openapi: 3.0.0
+info:
+  title: User Authentication API
+  version: 1.0.0
+  description: Routes for user registration and login.
 
 paths:
   /api/auth/register:
     post:
       tags:
-        - Auth
+        - Authentication
       summary: Register a new user
+      description: Creates a new user account with a username and password. On success, sets an HttpOnly cookie and returns a JWT token in the body for convenience.
+      operationId: registerUser
       requestBody:
+        description: User registration credentials.
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - username
-                - password
-              properties:
-                username:
-                  type: string
-                  example: testuser
-                password:
-                  type: string
-                  example: password123
+              $ref: '#/components/schemas/UserLogin' # Uses the same structure as login: username and password
       responses:
         '201':
-          description: User registered successfully
+          description: User successfully registered. The JWT token is returned in the response body and set as an **HttpOnly cookie**.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=eyJhbGciOiJIUzI1NiI...; Path=/; HttpOnly; SameSite=Strict; Secure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
         '400':
-          description: Username and password are required
+          description: Username or password missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
-          description: Username already exists
+          description: Username already exists (conflict).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error registering user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/auth/login:
     post:
       tags:
-        - Auth
-      summary: Log in a user and get a JWT token
+        - Authentication
+      summary: User login
+      description: Authenticates a user with username and password. On success, sets an HttpOnly cookie and returns a JWT token in the body for convenience.
+      operationId: loginUser
       requestBody:
+        description: User login credentials.
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - username
-                - password
-              properties:
-                username:
-                  type: string
-                  example: testuser
-                password:
-                  type: string
-                  example: password123
+              $ref: '#/components/schemas/UserLogin'
       responses:
         '200':
-          description: Successful login, returns a JWT token
+          description: User successfully logged in. The JWT token is returned in the response body and set as an **HttpOnly cookie**.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=eyJhbGciOiJIUzI1NiI...; Path=/; HttpOnly; SameSite=Strict; Secure
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                    description: The JWT for authentication
+                $ref: '#/components/schemas/TokenResponse'
         '400':
-          description: Invalid credentials
+          description: Invalid credentials (or username/password missing).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error logging in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    UserLogin:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Unique identifier for the user (min 3 characters).
+          example: john_doe
+        password:
+          type: string
+          format: password
+          description: User's plaintext password (min 8 characters).
+          example: StrongPass123!
+      required:
+        - username
+        - password
+
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT authentication token (also sent via HttpOnly cookie).
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MzEwYTIxZmFjMz...
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A detailed description of the error.
+          example: Invalid credentials

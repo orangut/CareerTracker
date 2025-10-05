@@ -1,33 +1,327 @@
-tags:
-  - name: User
-    description: Operations related to the authenticated user
+openapi: 3.0.0
+info:
+  title: User Management API
+  description: API for managing user profiles, authentication, and retrieval, based on the provided Express routes.
+  version: 1.0.0
 
 paths:
   /api/user/me:
     get:
-      summary: Get the authenticated user's profile
-      description: Retrieves the ID and username of the user authenticated via the HttpOnly cookie.
       tags:
-        - User
+        - Users
+      summary: Retrieve the current authenticated user's profile
+      description: Returns the profile data for the user associated with the provided authentication token.
+      operationId: getMe
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       responses:
         '200':
-          description: User profile retrieved successfully
+          description: Successfully retrieved user profile.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: number
-                    description: The user's unique ID.
-                    example: 1
-                  username:
-                    type: string
-                    description: The user's username.
-                    example: 'johndoe'
-        '401':
-          description: Unauthorized - The provided token is missing or invalid.
+                $ref: '#/components/schemas/UserPublic'
+        '403':
+          description: Not authorized (missing or invalid token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User profile not found for the authenticated ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal server error
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/user:
+    get:
+      tags:
+        - Users
+      summary: Retrieve all user profiles (Admin Access)
+      description: Returns a list of all user profiles. Requires administrative access or elevated permissions. Supports filtering.
+      operationId: getAllUsers
+      parameters:
+        - in: query
+          name: filters
+          schema:
+            type: string
+            description: "Optional JSON string for filtering users (e.g., {\"isActive\": true})."
+          example: '{"role": "admin"}'
+      responses:
+        '200':
+          description: Successfully retrieved list of users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserPublic'
+        '403':
+          description: Not authorized (user does not have administrative rights).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to retrieve users.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Users
+      summary: Create a new user profile (Admin Function)
+      description: Creates a new user profile. Typically restricted to administrators.
+      operationId: createUser
+      requestBody:
+        description: User data required for creation.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+        '400':
+          description: Invalid data provided (e.g., username already exists, password too short).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized (user does not have administrative rights).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/user/{targetUserId}:
+    parameters:
+      - in: path
+        name: targetUserId
+        schema:
+          type: string
+          format: objectid
+        required: true
+        description: The ID of the user to target.
+    get:
+      tags:
+        - Users
+      summary: Retrieve a specific user profile by ID
+      description: Retrieves a user profile by their unique ID.
+      operationId: getUserById
+      responses:
+        '200':
+          description: User profile successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+        '403':
+          description: Not authorized (permissions check failed).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to retrieve user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Users
+      summary: Update a specific user profile by ID
+      description: Updates the profile data for the specified user. Requires ownership or administrative rights.
+      operationId: updateUserById
+      requestBody:
+        description: Partial user data to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User profile successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+        '400':
+          description: Invalid data provided for update.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized (user lacks permission to update this profile).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found or update failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete a user profile by ID (Admin Function)
+      description: Permanently deletes a user profile. Typically restricted to administrators.
+      operationId: deleteUserById
+      responses:
+        '200':
+          description: User successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '403':
+          description: Not authorized (user does not have administrative rights).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found or deletion failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to delete user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/user/username/{username}:
+    get:
+      tags:
+        - Users
+      summary: Retrieve a user profile by username
+      description: Retrieves a user profile by their unique username.
+      operationId: getUserByUsername
+      parameters:
+        - in: path
+          name: username
+          schema:
+            type: string
+          required: true
+          description: The username of the user to retrieve.
+      responses:
+        '200':
+          description: User profile successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+        '403':
+          description: Not authorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to retrieve user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    UserPublic:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: The unique identifier for the user (MongoDB ObjectId).
+          example: 60d5ec49f6c3f1001550c8e2
+        username:
+          type: string
+          description: The user's unique username.
+          example: jsmith42
+      required:
+        - _id
+        - username
+
+    UserCreate:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The desired unique username (min 3 chars).
+          example: newuser_2023
+        hashedPassword:
+          type: string
+          description: The pre-hashed password for the user (min 8 chars).
+          example: '$2b$10$wT9r3q4R6s8E0hK1yJ2P3eA4'
+      required:
+        - username
+        - hashedPassword
+
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The new desired username.
+          example: new_username_55
+        hashedPassword:
+          type: string
+          description: The new pre-hashed password.
+          example: '$2b$10$wT9r3q4R6s8E0hK1yJ2P3eB5'
+      minProperties: 1
+      description: Fields are optional, but at least one must be provided.
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A detailed description of the error.
+          example: User not found.
+      required:
+        - error
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A confirmation message for successful operation.
+          example: User deleted successfully.
+      required:
+        - message

@@ -1,0 +1,293 @@
+openapi: 3.0.0
+info:
+  title: Job Application Stage Management API
+  description: API for managing individual stages (e.g., applied, interview, offer) within a job application.
+  version: 1.0.0
+
+paths:
+  /api/stage:
+    post:
+      tags:
+        - Stages
+      summary: Create a new stage for a job application
+      description: Creates a new stage entry, linking it to a specific job application ID.
+      operationId: createStage
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: Stage data required for creation.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageCreate'
+      responses:
+        '201':
+          description: Stage successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        '400':
+          description: Invalid data provided (e.g., missing jobApplicationId, invalid date format).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized (missing or invalid token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to create stage due to server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/stage/{stageId}:
+    parameters:
+      - in: path
+        name: stageId
+        schema:
+          type: string
+          format: objectid
+        required: true
+        description: The unique ID of the stage.
+    get:
+      tags:
+        - Stages
+      summary: Retrieve a single stage by ID
+      description: Returns the details of a specific stage by its ID, ensuring the stage belongs to the authenticated user.
+      operationId: getStageById
+      parameters:
+        - in: query
+          name: filters
+          schema:
+            type: string
+          description: "Optional JSON string for filtering (e.g., permissions check, if implemented)."
+          example: '{"archived": false}'
+      responses:
+        '200':
+          description: Stage successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        '403':
+          description: Not authorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stage not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to retrieve stage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Stages
+      summary: Update an existing stage
+      description: Updates the fields of a specific stage by ID. Only the authenticated owner can update.
+      operationId: updateStage
+      requestBody:
+        description: Partial stage data to update. All fields are optional.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageUpdate'
+      responses:
+        '200':
+          description: Stage successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        '403':
+          description: Not authorized (user is not the owner).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stage not found or update failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to update stage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Stages
+      summary: Delete a stage
+      description: Permanently deletes a stage by ID. Only the authenticated owner can delete.
+      operationId: deleteStage
+      responses:
+        '200':
+          description: Stage successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '403':
+          description: Not authorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stage not found or deletion failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to delete stage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Stage:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: The unique identifier for the stage (MongoDB ObjectId).
+          example: 60d5ec49f6c3f1001550c8e2
+        jobApplicationId:
+          type: string
+          description: The ID of the job application this stage belongs to.
+          example: 60d5ec49f6c3f1001550c8e3
+        type:
+          $ref: '#/components/schemas/StageType'
+        startedAt:
+          type: string
+          format: date-time
+          description: The date/time the stage started.
+        completedAt:
+          type: string
+          format: date-time
+          description: The date/time the stage was completed (optional).
+          nullable: true
+        notes:
+          type: array
+          items:
+            type: string
+          description: List of notes or comments for this stage.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - jobApplicationId
+        - type
+        - startedAt
+        - createdAt
+        - updatedAt
+
+    StageType:
+      type: string
+      enum:
+        - applied
+        - phone_screen
+        - technical_interview
+        - final_interview
+        - offer
+        - rejected
+        - withdrawn
+      description: The current status or type of the stage.
+
+    StageCreate:
+      type: object
+      properties:
+        jobApplicationId:
+          type: string
+          description: The ID of the parent job application.
+          example: 60d5ec49f6c3f1001550c8e3
+        type:
+          $ref: '#/components/schemas/StageType'
+        startedAt:
+          type: string
+          format: date-time
+          description: The date/time the stage started.
+        completedAt:
+          type: string
+          format: date-time
+          description: The date/time the stage was completed.
+          nullable: true
+        notes:
+          type: array
+          items:
+            type: string
+      required:
+        - jobApplicationId
+        - type
+        - startedAt
+
+    StageUpdate:
+      type: object
+      properties:
+        jobApplicationId:
+          type: string
+          description: The ID of the parent job application.
+          example: 60d5ec49f6c3f1001550c8e3
+        type:
+          $ref: '#/components/schemas/StageType'
+        startedAt:
+          type: string
+          format: date-time
+          description: The date/time the stage started.
+        completedAt:
+          type: string
+          format: date-time
+          description: The date/time the stage was completed.
+          nullable: true
+        notes:
+          type: array
+          items:
+            type: string
+      minProperties: 1
+      description: All fields are optional for update, but at least one must be provided.
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A detailed description of the error.
+          example: Stage not found or update failed.
+      required:
+        - error
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A confirmation message for successful operation.
+          example: Stage deleted successfully.
+      required:
+        - message

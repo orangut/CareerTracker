@@ -1,0 +1,283 @@
+openapi: 3.0.0
+info:
+  title: User Notification Rule API
+  description: API for managing user-defined notification rules based on time offsets.
+  version: 1.0.0
+
+paths:
+  /api/notification-rule:
+    get:
+      tags:
+        - Notification Rules
+      summary: Retrieve all notification rules for the authenticated user
+      description: Returns a list of all notification rules owned by the authenticated user, or an empty array if none exist.
+      operationId: getAllNotificationRules
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: filters
+          schema:
+            type: string
+          description: "Optional JSON string for filtering rules (e.g., used for internal checks)."
+          example: '{"offsetMs": 3600000}'
+      responses:
+        '200':
+          description: Successfully retrieved list of notification rules.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationRule'
+        '403':
+          description: Not authorized (missing or invalid token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to retrieve notification rules.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Notification Rules
+      summary: Create a new notification rule
+      description: Creates a new notification rule for the authenticated user, primarily defining the time offset.
+      operationId: createNotificationRule
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: Notification rule data required for creation.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRuleCreate'
+      responses:
+        '201':
+          description: Rule successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRule'
+        '400':
+          description: Invalid data provided (e.g., offsetMs outside range or not in 30-minute increments).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized (missing or invalid token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to create rule due to server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/notification-rule/{ruleId}:
+    parameters:
+      - in: path
+        name: ruleId
+        schema:
+          type: string
+          format: objectid
+        required: true
+        description: The unique ID of the notification rule.
+    get:
+      tags:
+        - Notification Rules
+      summary: Retrieve a single notification rule by ID
+      description: Returns the details of a specific notification rule by its ID.
+      operationId: getNotificationRuleById
+      parameters:
+        - in: query
+          name: filters
+          schema:
+            type: string
+          description: "Optional JSON string for filtering (e.g., used for internal permissions checks)."
+          example: '{}'
+      responses:
+        '200':
+          description: Rule successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRule'
+        '403':
+          description: Not authorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Notification rule not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to retrieve rule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Notification Rules
+      summary: Update an existing notification rule
+      description: Updates the fields of a specific notification rule by ID.
+      operationId: updateNotificationRule
+      requestBody:
+        description: Partial notification rule data to update. All fields are optional.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRuleUpdate'
+      responses:
+        '200':
+          description: Rule successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRule'
+        '403':
+          description: Not authorized (user is not the owner).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Rule not found or update failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to update rule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Notification Rules
+      summary: Delete a notification rule
+      description: Permanently deletes a notification rule by ID.
+      operationId: deleteNotificationRule
+      responses:
+        '200':
+          description: Rule successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '403':
+          description: Not authorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Rule not found or deletion failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to delete rule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    NotificationRule:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+          description: The unique identifier for the rule (MongoDB ObjectId).
+          example: 60d5ec49f6c3f1001550c8e2
+        userId:
+          type: string
+          format: objectid
+          description: The ID of the user who owns this rule.
+        offsetMs:
+          type: number
+          format: int64
+          description: |
+            The offset in milliseconds from a relevant application event (e.g., interview time).
+            Must be within ±4 weeks ($$\pm 2419200000$$ ms) and in increments of 30 minutes ($$1800000$$ ms).
+          example: 3600000 # 1 hour
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - userId
+        - offsetMs
+        - createdAt
+        - updatedAt
+
+    NotificationRuleCreate:
+      type: object
+      properties:
+        offsetMs:
+          type: number
+          format: int64
+          description: |
+            The offset in milliseconds from a relevant application event (e.g., interview time).
+            Must be within ±4 weeks ($$\pm 2419200000$$ ms) and in increments of 30 minutes ($$1800000$$ ms).
+          example: -1800000 # 30 minutes before
+      required:
+        - offsetMs
+
+    NotificationRuleUpdate:
+      type: object
+      properties:
+        offsetMs:
+          type: number
+          format: int64
+          description: |
+            The offset in milliseconds from a relevant application event (e.g., interview time).
+            Must be within ±4 weeks ($$\pm 2419200000$$ ms) and in increments of 30 minutes ($$1800000$$ ms).
+          example: 7200000 # 2 hours after
+      minProperties: 1
+      description: Only 'offsetMs' can be updated.
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A detailed description of the error.
+          example: Notification rule not found.
+      required:
+        - error
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A confirmation message for successful operation.
+          example: Notification rule deleted successfully.
+      required:
+        - message

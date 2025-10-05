@@ -1,0 +1,186 @@
+openapi: 3.0.0
+info:
+  title: Notification Rule API
+  version: 1.0.0
+  description: API endpoints for managing notification rules
+
+tags:
+  - name: NotificationRule
+    description: Notification rule management
+
+paths:
+  /api/notification-rules:
+    post:
+      tags:
+        - NotificationRule
+      summary: Create a new notification rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRuleInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+        '400':
+          description: Validation error
+        '500':
+          description: Failed to create notification rule
+
+    get:
+      tags:
+        - NotificationRule
+      summary: Get all notification rules for a user
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: integer
+          required: true
+          description: User ID
+      responses:
+        '200':
+          description: List of notification rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationRule'
+        '500':
+          description: Failed to fetch notification rules
+
+  /api/notification-rules/{id}:
+    get:
+      tags:
+        - NotificationRule
+      summary: Get a single notification rule by ID
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Notification rule ID
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: User ID
+      responses:
+        '200':
+          description: Notification rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRule'
+        '404':
+          description: Not found
+        '500':
+          description: Failed to fetch notification rule
+
+    put:
+      tags:
+        - NotificationRule
+      summary: Update a notification rule
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Notification rule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRuleInput'
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Validation error
+        '404':
+          description: Not found or unauthorized
+        '500':
+          description: Failed to update notification rule
+
+    delete:
+      tags:
+        - NotificationRule
+      summary: Delete a notification rule
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Notification rule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Not found or unauthorized
+        '500':
+          description: Failed to delete notification rule
+
+components:
+  schemas:
+    NotificationRuleInput:
+      type: object
+      properties:
+        userId:
+          type: string
+        offsetMs:
+          type: integer
+          description: Offset in milliseconds (±4 weeks)
+      required:
+        - userId
+        - offsetMs
+
+    NotificationRule:
+      allOf:
+        - $ref: '#/components/schemas/NotificationRuleInput'
+        - type: object
+          properties:
+            _id:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
