@@ -159,6 +159,11 @@ paths:
 
 components:
   schemas:
+    StageType:
+      type: string
+      enum: [applied, phone_screen, technical_interview, final_interview, offer, rejected, withdrawn]
+      description: The current type or status of the application stage.
+
     NotificationRuleInput:
       type: object
       properties:
@@ -167,9 +172,13 @@ components:
         offsetMs:
           type: integer
           description: Offset in milliseconds (±4 weeks)
+        stageType:
+          $ref: '#/components/schemas/StageType'
+
       required:
         - userId
         - offsetMs
+        - stageType
 
     NotificationRule:
       allOf:
