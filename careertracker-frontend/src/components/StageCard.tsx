@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Stack, CardHeader } from '@mui/material';
+import { Card, CardContent, Typography, Stack } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { formatDate } from '../utils/helperFunctions';
 
@@ -16,7 +16,7 @@ const StageCard = ({ id, isSelected, onSelect, title, time }: StageCardProps) =>
     onClick={() => onSelect(id)}
     elevation={1}
     sx={{
-      width: 240,
+      width: 300,
       height: 80,
       my: 0.5,
       cursor: 'pointer',
