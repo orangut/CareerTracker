@@ -4,19 +4,19 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 interface JwtPayload {
-    userId: number;
+    userId: string;
 }
 
-interface AuthenticatedRequest extends Request {
-    userId?: number;
+export type Role = 'user' | 'admin';
+
+export interface AuthenticatedRequest extends Request {
+    userId?: string;
+    role?: Role;
 }
 
 const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     // Get the token directly from the cookie
     const token = req.cookies.token;
-
-    console.log('token', token);
-
 
     if (token == null) {
         return res.status(401).json({ error: 'Token not provided' });
@@ -34,6 +34,7 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
 
         if (typeof user === 'object' && user.userId) {
             req.userId = user.userId;
+            req.role = 'user' // TODO: handle real roles ('admin' or 'user')
             next();
         } else {
             return res.status(403).json({ error: 'Invalid token payload.' });

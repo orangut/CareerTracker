@@ -1,0 +1,11 @@
+{
+  "name": "careertracker-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=db-api-client && npm run build --workspace=careertracker-backend"
+  }
+}

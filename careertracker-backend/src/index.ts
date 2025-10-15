@@ -3,18 +3,17 @@ import dotenv from 'dotenv';
 import path from 'path';
 import cors from 'cors';
 
-// Import Sequelize and the database configuration
-import sequelize from './config/sequelize';
-
 // Import Swagger libraries
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import YAML from 'yamljs'
 
 // Import your custom routes
 import apiRouter from './routes';
 
-// Import your custom middleware
-import authenticateToken from './middleware/authenticateToken';
+// Import logger
+import logger from './config/logger';
+
 
 // Import cookie middleware
 import cookieParser from 'cookie-parser';
@@ -37,41 +36,24 @@ app.use(express.json());
 // Middleware for push token auth with cookie to the frontend
 app.use(cookieParser());
 
-// --- Swagger/OpenAPI configuration ---
+
+const rootDefinition = YAML.load(path.join(__dirname, './routes/swagger/openapi.swagger.yaml'));
+
+
 const swaggerOptions = {
-    definition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'Career Tracker API',
-            version: '1.0.0',
-            description: 'API for tracking job applications',
-        },
-        servers: [
-            {
-                url: 'http://localhost:3000',
-            },
-        ],
-        components: {
-            securitySchemes: {
-                bearerAuth: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
-                },
-            },
-        },
-    },
-    // Fix: Use __dirname to build a path relative to the current file (index.ts)
+    // 1. Use the content loaded from the new YAML file
+    definition: rootDefinition,
+    // 2. Keep the 'apis' array to tell swagger-jsdoc which other files to merge
     apis: [
-        path.join(__dirname, './routes/swagger/*.yaml')
+        path.join(__dirname, './routes/swagger/*.yaml'),
     ],
 };
 
+// --- Your existing code, now using the dynamic options ---
+const swaggerSpec = swaggerJsdoc(swaggerOptions); // Note: You must pass swaggerOptions here!
 
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-
-// This console.log will confirm the resolved path. Check your terminal!
-console.log('Resolved Swagger API path:', path.join(__dirname, './routes/swagger/*.yaml'));
+// This logger.info will confirm the resolved path. Check your log file!
+logger.info(`Resolved Swagger API path: ${path.join(__dirname, './routes/swagger/*.yaml')}`);
 
 // Serve Swagger UI on the /api-docs route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -80,17 +62,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // --- API Routes ---
 app.use('/api', apiRouter);
 
-// --- Database Sync and Server Start ---
-
-// Use sequelize.sync() to create tables if they don't exist
-sequelize.sync()
-    .then(() => {
-        console.log('Database and tables synced!');
-        // Now start the server
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
-    })
-    .catch((error) => {
-        console.error('Failed to sync database:', error);
+try {
+    app.listen(PORT, () => {
+        logger.info(`Server is running on port ${PORT}`);
     });
+} catch (error) {
+    logger.error('Failed to start server:', error);
+}

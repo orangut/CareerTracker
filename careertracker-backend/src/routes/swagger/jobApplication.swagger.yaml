@@ -1,180 +1,453 @@
-tags:
-  - name: Job Applications
-    description: API for managing job application records
+openapi: 3.0.0
+info:
+  title: Job Application Management API
+  description: API for managing job applications, including CRUD operations and stage retrieval.
+  version: 1.0.0
 
 paths:
-  /api/jobapplications:
+  /api/job-application:
     get:
-      summary: Get all job applications for the authenticated user
-      description: Retrieves a list of all job application records that belong to the user authenticated via the HttpOnly cookie.
       tags:
         - Job Applications
+      summary: Retrieve all job applications for the authenticated user
+      description: Returns a list of all job applications owned by the authenticated user, optionally filtered. Includes the latest stage data.
+      operationId: getAllJobApplications
       security:
-        - bearerAuth: []
+        - BearerAuth: [ ]
+      parameters:
+        - in: query
+          name: filters
+          schema:
+            type: string
+          description: "Optional JSON string for filtering applications (e.g., {\"position\": \"Software Engineer\"})."
+          example: '{"remoteOption": "remote"}'
       responses:
         '200':
-          description: A list of job applications.
+          description: Successfully retrieved list of job applications. Returns an empty array if none are found.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/JobApplication'
-        '401':
-          description: Unauthorized - The provided token is missing or invalid.
+                  $ref: '#/components/schemas/JobApplicationPopulated'
+        '403':
+          description: Not authorized (missing or invalid token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal server error.
+          description: Failed to retrieve job applications.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
     post:
-      summary: Create a new job application
-      description: Creates a new job application record linked to the authenticated user.
       tags:
         - Job Applications
+      summary: Create a new job application
+      description: Creates a new job application entry for the authenticated user.
+      operationId: createJobApplication
       security:
-        - bearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
+        description: Job application data required for creation.
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                company:
-                  type: string
-                  example: "Google"
-                position:
-                  type: string
-                  example: "Software Engineer"
-                location:
-                  type: string
-                  example: "Mountain View, CA"
-                applicationDate:
-                  type: string
-                  format: date
-                  example: "2025-09-17"
-                interestLevel:
-                  type: number
-                  example: 5
-                currentStage:
-                  type: string
-                  enum:
-                    - "applied"
-                    - "phone_screen"
-                    - "technical_interview"
-                    - "final_interview"
-                    - "offer"
-                    - "rejected"
-                    - "withdrawn"
-                  example: "applied"
-                salaryMin:
-                  type: number
-                  example: 120000
-                salaryMax:
-                  type: number
-                  example: 150000
-                remoteOption:
-                  type: string
-                  enum:
-                    - "remote"
-                    - "hybrid"
-                    - "onsite"
-                  example: "remote"
-                jobUrl:
-                  type: string
-                  format: url
-                  example: "https://careers.google.com/jobs/..."
-                isEdit:
-                  type: boolean
-                  example: false
-                notes:
-                  type: array
-                  items:
-                    type: string
-                  example: ["Initial conversation with recruiter."]
-                stages:
-                  type: array
-                  items:
-                    type: string
-                  example: ["Applied online", "Recruiter call scheduled"]
+              $ref: '#/components/schemas/JobApplicationCreate'
       responses:
         '201':
-          description: Job application created successfully.
+          description: Job application successfully created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobApplication'
+                $ref: '#/components/schemas/JobApplicationPopulated'
         '400':
-          description: Invalid input data.
-        '401':
-          description: Unauthorized - The provided token is missing or invalid.
+          description: Invalid data provided (e.g., failed Zod validation).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized (missing or invalid token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to create job application due to server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/job-application/{applicationId}:
+    parameters:
+      - in: path
+        name: applicationId
+        schema:
+          type: string
+          format: objectid
+        required: true
+        description: The unique ID of the job application.
+    get:
+      tags:
+        - Job Applications
+      summary: Retrieve a single job application by ID
+      description: Returns the details of a specific job application by its ID, including the last stage.
+      operationId: getJobApplicationById
+      parameters:
+        - in: query
+          name: filters
+          schema:
+            type: string
+          description: "Optional JSON string for filtering (e.g., used for internal permissions checks)."
+          example: '{"status": "active"}'
+      responses:
+        '200':
+          description: Job application successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplicationPopulated'
+        '403':
+          description: Not authorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Job application not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to retrieve job application.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Job Applications
+      summary: Update an existing job application
+      description: Updates the fields of a specific job application by ID.
+      operationId: updateJobApplication
+      requestBody:
+        description: Partial job application data to update. All fields are optional.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobApplicationUpdate'
+      responses:
+        '200':
+          description: Job application successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplicationPopulated'
+        '403':
+          description: Not authorized (user is not the owner).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Job application not found or update failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to update job application.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Job Applications
+      summary: Delete a job application
+      description: Permanently deletes a job application by ID.
+      operationId: deleteJobApplication
+      responses:
+        '200':
+          description: Job application successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '403':
+          description: Not authorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Job application not found or deletion failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to delete job application.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/job-application/{applicationId}/stages:
+    parameters:
+      - in: path
+        name: applicationId
+        schema:
+          type: string
+          format: objectid
+        required: true
+        description: The ID of the job application whose stages are being retrieved.
+    get:
+      tags:
+        - Job Applications
+      summary: Retrieve all stages for a specific job application
+      description: Returns a list of all stages associated with the given job application ID.
+      operationId: getStagesByApplicationId
+      parameters:
+        - in: query
+          name: filters
+          schema:
+            type: string
+          description: "Optional JSON string for filtering the stages (e.g., by date)."
+          example: '{"type": "phone_screen"}'
+      responses:
+        '200':
+          description: Stages successfully retrieved. Returns an empty array if no stages exist.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stage'
+        '403':
+          description: Not authorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to retrieve application stages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
-    JobApplication:
+    RemoteOption:
+      type: string
+      enum:
+        - remote
+        - hybrid
+        - onsite
+      description: The remote work option for the job.
+
+    StageType:
+      type: string
+      enum:
+        - applied
+        - phone_screen
+        - technical_interview
+        - final_interview
+        - offer
+        - rejected
+        - withdrawn
+      description: The current status or type of the stage.
+
+    Stage:
       type: object
       properties:
-        id:
-          type: number
-          description: The unique identifier for the job application.
-          example: 101
-        userId:
-          type: number
-          description: The ID of the user who owns this application.
-          example: 25
-        company:
+        _id:
           type: string
-          example: "Google"
-        position:
+          description: The unique identifier for the stage (MongoDB ObjectId).
+          example: 60d5ec49f6c3f1001550c8e2
+        jobApplicationId:
           type: string
-          example: "Software Engineer"
-        location:
+          description: The ID of the job application this stage belongs to.
+          example: 60d5ec49f6c3f1001550c8e3
+        type:
+          $ref: '#/components/schemas/StageType'
+        startedAt:
           type: string
-          example: "Mountain View, CA"
-        applicationDate:
+          format: date-time
+          description: The date/time the stage started.
+        completedAt:
           type: string
-          format: date
-          example: "2025-09-17T12:00:00Z"
-        interestLevel:
-          type: number
-          example: 5
-        currentStage:
-          type: string
-          enum:
-            - "applied"
-            - "phone_screen"
-            - "technical_interview"
-            - "final_interview"
-            - "offer"
-            - "rejected"
-            - "withdrawn"
-          example: "applied"
-        salaryMin:
-          type: number
-          example: 120000
-        salaryMax:
-          type: number
-          example: 150000
-        remoteOption:
-          type: string
-          enum:
-            - "remote"
-            - "hybrid"
-            - "onsite"
-          example: "remote"
-        jobUrl:
-          type: string
-          format: url
-          example: "https://careers.google.com/jobs/..."
-        isEdit:
-          type: boolean
-          example: false
+          format: date-time
+          description: The date/time the stage was completed (optional).
+          nullable: true
         notes:
           type: array
           items:
             type: string
-          example: ["Initial conversation with recruiter."]
-        stages:
+          description: List of notes or comments for this stage.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    JobApplication:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: The unique ID for the job application (MongoDB ObjectId).
+        userId:
+          type: string
+          description: The ID of the user who owns this application.
+        company:
+          type: string
+        position:
+          type: string
+        location:
+          type: string
+        applicationDate:
+          type: string
+          format: date-time
+        interestLevel:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 10
+        salaryMin:
+          type: number
+          format: double
+          nullable: true
+        salaryMax:
+          type: number
+          format: double
+          nullable: true
+        remoteOption:
+          $ref: '#/components/schemas/RemoteOption'
+        jobUrl:
+          type: string
+          format: url
+        isEdit:
+          type: boolean
+        lastStageId:
+          type: string
+          format: objectid
+          description: ID of the latest associated stage.
+          nullable: true
+        notes:
           type: array
           items:
             type: string
-          example: ["Applied online", "Recruiter call scheduled"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    JobApplicationPopulated:
+      allOf:
+        - $ref: '#/components/schemas/JobApplication'
+        - type: object
+          properties:
+            lastStageId:
+              description: Omitted from populated response.
+              not: { }
+            lastStage:
+              $ref: '#/components/schemas/Stage'
+
+    JobApplicationCreate:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: 68dab848806c678486602d51
+        company:
+          type: string
+          example: Google
+        position:
+          type: string
+          example: Senior Software Engineer
+        location:
+          type: string
+          example: Mountain View, CA
+        applicationDate:
+          type: string
+          format: date-time
+        interestLevel:
+          type: integer
+          minimum: 0
+          maximum: 10
+          example: 8
+        salaryMin:
+          type: number
+          nullable: true
+        salaryMax:
+          type: number
+          nullable: true
+        remoteOption:
+          $ref: '#/components/schemas/RemoteOption'
+        jobUrl:
+          type: string
+          format: url
+          example: https://careers.google.com/job/12345
+        isEdit:
+          type: boolean
+          description: Indicates if the application is currently being edited.
+        notes:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [ Applied, Interview, Offer, Rejected, Initial ]
+          description: Optional initial status (not part of the model but included in CreateSchema).
+          nullable: true
+      required:
+        - company
+        - position
+        - location
+        - applicationDate
+        - interestLevel
+        - remoteOption
+        - jobUrl
+        - isEdit
+
+    JobApplicationUpdate:
+      allOf:
+        - $ref: '#/components/schemas/JobApplicationCreate'
+        - description: All fields are optional for update, but at least one must be provided.
+          minProperties: 1
+      required: [ ] # All fields are optional
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A detailed description of the error.
+          example: Job application not found.
+      required:
+        - error
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A confirmation message for successful operation.
+          example: Job application deleted successfully.
+      required:
+        - message

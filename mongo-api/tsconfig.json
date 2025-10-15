@@ -10,14 +10,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "baseUrl": "../../",
-    "paths": {
-      "@monorepo/db-api-client": ["packages/db-api-client/src"]
-    }
   },
   "include": [
     "src/**/*",
-    "src/routes/swagger/*.yaml"
+    "src/routes/swagger/*.yaml",
   ],
   "exclude": [
     "node_modules",
