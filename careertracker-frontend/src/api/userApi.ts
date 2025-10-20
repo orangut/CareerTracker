@@ -1,7 +1,7 @@
 import axiosClient from './axiosClient';
 
 interface UserData {
-    id: string;
+    _id: string;
     username: string;
 }
 

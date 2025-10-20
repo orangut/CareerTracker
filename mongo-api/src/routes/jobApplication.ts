@@ -221,7 +221,7 @@ jobApplicationRoute.get("/:id/stages", validateObjectId, async (req: GetStagesAp
             return res.status(404).json({error: "Job application not found or unauthorized."});
         }
 
-        const stages = await stagesCollection.findOne({...otherFilters, jobApplicationId: appIdObject});
+        const stages = await stagesCollection.find({...otherFilters, jobApplicationId: appIdObject}).toArray();
 
         logger.info(`Successfully fetched ${stage.length} stages for jobApplication: ${id}. UserId: ${userId}`);
         res.json(stages);

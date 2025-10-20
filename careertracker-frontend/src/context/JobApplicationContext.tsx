@@ -1,9 +1,7 @@
-// src/context/JobApplicationContext.tsx
-
-import { useState, useEffect, createContext, useReducer, useContext, type ReactNode } from 'react';
+import { useEffect, createContext, useReducer, useContext, type ReactNode } from 'react';
 import { createJobApplication as createJobApplicationAPI, getJobApplications, updateJobApplication as updateJobApplicationAPI, deleteJobApplication as deleteJobApplicationAPI } from '../api/jobApplicationsApi';
 import { type JobApplication } from '../models/JobApplication';
-import { useUser } from './UserContext'; // <-- Import the UserContext hook
+import { useUser } from './UserContext';
 
 // Types
 interface JobApplicationState {
@@ -18,7 +16,7 @@ type JobApplicationAction =
 
 export interface JobApplicationContextType {
     jobApplications: JobApplication[];
-    createJobApplication: (job: Omit<JobApplication, 'id' | 'isEdit'>) => Promise<void>;
+    createJobApplication: (job: Omit<JobApplication, '_id' | 'userId'>) => Promise<void>;
     readJobApplication: (id: string) => JobApplication | undefined;
     updateJobApplication: (job: JobApplication) => Promise<void>;
     deleteJobApplication: (id: string) => Promise<void>;
@@ -33,11 +31,11 @@ function jobApplicationReducer(state: JobApplicationState, action: JobApplicatio
             return { jobApplications: [...state.jobApplications, action.payload] };
         case 'UPDATE':
             return {
-                jobApplications: state.jobApplications.map(job => job.id === action.payload.id ? action.payload : job)
+                jobApplications: state.jobApplications.map(job => job._id === action.payload._id ? action.payload : job)
             };
         case 'DELETE':
             return {
-                jobApplications: state.jobApplications.filter(job => job.id !== action.payload)
+                jobApplications: state.jobApplications.filter(job => job._id !== action.payload)
             };
         default:
             return state;
@@ -51,27 +49,19 @@ const JobApplicationContext = createContext<JobApplicationContextType | undefine
 export const JobApplicationProvider = ({ children }: { children: ReactNode }) => {
     const { user, loading: userLoading } = useUser();
     const [state, dispatch] = useReducer(jobApplicationReducer, { jobApplications: [] });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchApplications = async () => {
             if (user && user.id) {
-                setLoading(true);
                 try {
                     const fetchedApps = await getJobApplications();
                     dispatch({ type: 'LOAD_APPLICATIONS', payload: fetchedApps });
                 } catch (err: any) {
-                    setError('Failed to load job applications. Please try again.');
-                    console.error('Fetching job applications failed:', err);
-                } finally {
-                    setLoading(false);
+                    throw err;
                 }
             } else {
                 // If the user is not logged in, reset the state and do not show a loading screen
                 dispatch({ type: 'LOAD_APPLICATIONS', payload: [] });
-                setLoading(false);
-                setError(null);
             }
         };
 
@@ -80,12 +70,12 @@ export const JobApplicationProvider = ({ children }: { children: ReactNode }) =>
         }
     }, [user, userLoading]); // Dependency array includes 'user' to re-run on login/logout
 
-    const createJobApplication = async (jobApplication: Omit<JobApplication, 'id' | 'isEdit'>) => {
+    const createJobApplication = async (jobApplication: Omit<JobApplication, '_id' | 'userId'>) => {
         try {
-            const newJob = await createJobApplicationAPI({ ...jobApplication, isEdit: true });
+            const newJob = await createJobApplicationAPI({ ...jobApplication, userId: user?.id! });
             dispatch({ type: 'CREATE', payload: newJob });
         } catch (err: any) {
-            setError('Failed to create job application.');
+            throw err;
         }
     };
 
@@ -94,7 +84,7 @@ export const JobApplicationProvider = ({ children }: { children: ReactNode }) =>
             const updatedJob = await updateJobApplicationAPI(jobApplication);
             dispatch({ type: 'UPDATE', payload: updatedJob });
         } catch (err: any) {
-            setError('Failed to update job application.');
+            throw err;
         }
     };
 
@@ -103,21 +93,11 @@ export const JobApplicationProvider = ({ children }: { children: ReactNode }) =>
             await deleteJobApplicationAPI(id);
             dispatch({ type: 'DELETE', payload: id });
         } catch (err: any) {
-            setError('Failed to delete job application.');
+            throw err;
         }
     };
 
-    const readJobApplication = (id: string) => state.jobApplications.find(job => job.id.toString() === id);
-
-    // Conditionally render based on the new loading state
-    if (loading) {
-        return <div>Loading your job applications...</div>;
-    }
-
-    if (error) {
-        // TODO: Create a error page
-        return <div>Error: {error}</div>;
-    }
+    const readJobApplication = (id: string) => state.jobApplications.find(job => job._id.toString() === id);
 
     return (
         <JobApplicationContext.Provider value={{ jobApplications: state.jobApplications, createJobApplication, readJobApplication, updateJobApplication, deleteJobApplication }}>

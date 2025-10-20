@@ -51,7 +51,7 @@ const LoginPage = () => {
             const authFunc = mode == 'login' ? authLogin : authSignup;
             await authFunc(username, password)
             const res = await fetchCurrentUser();
-            setUser({ id: res.id, name: res.username });
+            setUser({ id: res._id, name: res.username });
 
         } catch (error: unknown) {
             if (isAxiosError(error)) {
@@ -59,7 +59,6 @@ const LoginPage = () => {
             } else {
                 setErrorMsg('An unexpected error occurred. Please try again.');
             }
-            console.error(error);
         }
     };
 

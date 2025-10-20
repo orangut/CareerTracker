@@ -1,7 +1,7 @@
 import { type JobApplication } from "../models/JobApplication.ts";
 
 // Helper function for status chip styles
-export const getStatusChipStyles = (status: JobApplication['currentStage']) => {
+export const getStatusChipStyles = (status: JobApplication['lastStageType']) => {
     switch (status) {
         case 'applied':
             return { bgcolor: 'rgba(0, 150, 255, 0.1)', color: 'info.dark' }; // Blue
@@ -53,5 +53,5 @@ export const formatDate = (date: Date | string, withTime: boolean = false): stri
 }
 
 export const getSalaryString = (salaryMin?: number | undefined, salaryMax?: number | undefined): string => {
-    return `${salaryMin ? `${salaryMin.toString()}k$` : '?'} - ${salaryMax ? `${salaryMax}k$` : '?'}`
+    return `${salaryMin !== undefined ? `${salaryMin.toString()}k$` : '?'} - ${salaryMax !== undefined ? `${salaryMax}k$` : '?'}`
 }

@@ -1,10 +1,11 @@
-import { Box, Card, CardContent, Chip, IconButton, Rating, Stack, Typography, Button } from '@mui/material';
+import { Box, Card, CardContent, Chip, IconButton, Stack, Typography, Button } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import EditIcon from '@mui/icons-material/Edit';
 import { type JobApplication } from "../../models/JobApplication.ts";
 import { useNavigate } from "react-router-dom";
 import { getStatusChipStyles, getRemoteOptionChipStyles, formatDate, getSalaryString } from '../../utils/helperFunctions.ts';
+import StarRaiting from '../starRaiting.tsx';
 
 interface JobApplicationCardProps {
     job: JobApplication;
@@ -50,7 +51,7 @@ const JobApplicationCard = ({ job }: JobApplicationCardProps) => {
                     }}
                 >
                     <IconButton size="small">
-                        <EditIcon fontSize="small" onClick={() => navigate(`/edit/${job.id}`)} />
+                        <EditIcon fontSize="small" onClick={() => navigate(`/edit/${job._id}`)} />
                     </IconButton>
                 </Box>
             )}
@@ -65,12 +66,7 @@ const JobApplicationCard = ({ job }: JobApplicationCardProps) => {
                         <Typography variant="subtitle1" color="text.secondary">
                             {job.company}
                         </Typography>
-                        <Rating
-                            name="job-rating"
-                            value={job.interestLevel}
-                            readOnly
-                            precision={0.5}
-                        />
+                        <StarRaiting value={job.interestLevel} />
                     </Stack>
                 </Box>
 
@@ -96,11 +92,11 @@ const JobApplicationCard = ({ job }: JobApplicationCardProps) => {
                                 Applied {formatDate(job.applicationDate)}
                             </Typography>
                         </Stack>
-                        <Chip
-                            label={job.currentStage.replace('_', ' ')}
+                        {job.lastStageType && <Chip
+                            label={job.lastStageType.replace('_', ' ')}
                             size="small"
-                            sx={getStatusChipStyles(job.currentStage)}
-                        />
+                            sx={getStatusChipStyles(job.lastStageType)}
+                        />}
                     </Stack>
                 </Box>
 
@@ -109,7 +105,7 @@ const JobApplicationCard = ({ job }: JobApplicationCardProps) => {
                     <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: 14 }}>
                         {getSalaryString(job?.salaryMin, job?.salaryMax)}
                     </Typography>
-                    <Button variant='text' sx={{ textTransform: "none" }} onClick={() => navigate(`/view/${job.id}`)}>
+                    <Button variant='text' sx={{ textTransform: "none" }} onClick={() => navigate(`/view/${job._id}`)}>
                         View Details
                     </Button>
                 </Stack>
