@@ -5,10 +5,11 @@ import {
     createJobApplication,
     deleteJobApplication,
     getAllJobApplications,
-    getJobApplicationById, getStagesByJobApplicationId,
+    getJobApplicationById,
+    getStagesByJobApplicationId,
     updateJobApplication
 } from './jobApplication';
-import {createStage, deleteStage, getStageById, updateStage} from './stage';
+import {createStage, deleteStage, getAllLastStages, getStageById, updateStage} from './stage';
 import {
     createNotificationRule,
     deleteNotificationRule,
@@ -102,6 +103,9 @@ const dbApiClient = (db_api_url: string, logger: Logger) => {
             ),
         },
         stages: {
+            getAllLastStages: async (callingUserId: string, filters: Filters<Stage> = {}): Promise<Stage[] | null> => handleApiRequest(
+                getAllLastStages(apiClient, logger)(callingUserId, filters)
+            ),
             getById: async (callingUserId: string, stageId: string, filters: Filters<Stage> = {}): Promise<Stage | null> => handleApiRequest(
                 getStageById(apiClient, logger)(callingUserId, stageId, filters)
             ),

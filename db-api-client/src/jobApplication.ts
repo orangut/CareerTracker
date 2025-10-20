@@ -44,8 +44,7 @@ export const createJobApplication = (apiClient: AxiosInstance, logger: Logger) =
 
 /**
  * Fetches all job applications visible to the calling user.
- * Uses POST to send role-based filters in the body payload.
- */
+ * */
 export const getAllJobApplications = (apiClient: AxiosInstance, logger: Logger) => async (
     callingUserId: string, // The ID of the user making the request (for auth context)
     filters: Filters<JobApplication> = {} // Role-based authorization filters provided by backend
@@ -73,8 +72,7 @@ export const getAllJobApplications = (apiClient: AxiosInstance, logger: Logger) 
 };
 
 /**
- * Fetches a single job application by JobApplication ID.
- * Authorization context and filters are sent in the body payload.
+ * Fetches a single job application by its ID.
  */
 export const getJobApplicationById = (apiClient: AxiosInstance, logger: Logger) => async (
     callingUserId: string,

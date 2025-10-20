@@ -9,7 +9,7 @@ tags:
     description: Notification rule management
 
 paths:
-  /api/notification-rules:
+  /api/notification-rule:
     post:
       tags:
         - NotificationRule
@@ -58,7 +58,7 @@ paths:
         '500':
           description: Failed to fetch notification rules
 
-  /api/notification-rules/{id}:
+  /api/notification-rule/{id}:
     get:
       tags:
         - NotificationRule

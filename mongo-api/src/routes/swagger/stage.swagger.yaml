@@ -40,10 +40,47 @@ paths:
         '500':
           description: Server error.
 
-  /api/stage/{stageId}:
+  /api/stage/last-stages:
+    # ----------------------------------------------------
+    # GET /api/last-stages - Get Last Stages
+    # ----------------------------------------------------
+    get:
+      tags:
+        - Stages
+      summary: Retrieve all current 'last stages' for the authenticated user.
+      description: Fetches a list of stages where each stage is marked as the lastStageId on its associated Job Application. The results are automatically filtered by the authenticated user ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        # Optional parameters for filtering based on Stage or JobApplication fields
+        - in: query
+          name: type
+          schema:
+            type: string
+          description: Optional filter by stage type (e.g., 'Interview', 'Offer').
+        - in: query
+          name: jobApplicationId
+          schema:
+            type: string
+          description: Optional filter by the associated job application ID.
+      responses:
+        '200':
+          description: Successfully retrieved the list of last stages. Returns an empty array if none are found.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stage'
+        '403':
+          description: Not authorized (e.g., missing or invalid authentication token).
+        '500':
+          description: Server error.
+
+  /api/stage/{id}:
     parameters:
       - in: path
-        name: stageId
+        name: id
         schema:
           type: string
           format: objectId
@@ -51,7 +88,7 @@ paths:
         description: The ID of the Stage to retrieve, update, or delete.
 
     # ----------------------------------------------------
-    # GET /api/stage/{stageId} - Get Stage by ID
+    # GET /api/stage/{id} - Get Stage by ID
     # ----------------------------------------------------
     get:
       tags:
@@ -73,7 +110,7 @@ paths:
           description: Server error.
 
     # ----------------------------------------------------
-    # PUT /api/stage/{stageId} - Update Stage
+    # PUT /api/stage/{id} - Update Stage
     # ----------------------------------------------------
     put:
       tags:
@@ -101,16 +138,6 @@ paths:
           description: Stage not found.
         '500':
           description: Server error.
-
-  /api/stage/{id}:
-    parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: objectId
-        required: true
-        description: The ID of the Stage to delete.
 
     # ----------------------------------------------------
     # DELETE /api/stage/{id} - Delete Stage

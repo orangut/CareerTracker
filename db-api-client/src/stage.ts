@@ -1,13 +1,40 @@
-import { AxiosInstance } from 'axios';
+import {AxiosInstance} from 'axios';
 // Assuming Stage, StageCreateData, StageUpdateData, Filters, and MyRequestBody are defined in interfaces
-import { Stage, StageCreateData, StageUpdateData, Filters, MyRequestBody } from './interfaces';
-import { BASE_PATH_STAGES } from './constants';
-import { Logger } from 'winston';
+import {Filters, MyRequestBody, Stage, StageCreateData, StageUpdateData} from './interfaces';
+import {BASE_PATH_STAGES} from './constants';
+import {Logger} from 'winston';
 
 
 /**
+ * Fetches all stages visible to the calling user.
+ */
+export const getAllLastStages = (apiClient: AxiosInstance, logger: Logger) => async (
+    callingUserId: string,
+    filters: Filters<Stage> = {} // Role-based authorization filters provided by backend
+): Promise<Stage[]> => {
+    try {
+        const url = `${BASE_PATH_STAGES}/last-stages`;
+
+        // Prepare query parameters
+        const params = {
+            userId: callingUserId,
+            // Filters must be stringified to be safely transmitted in the URL
+            filters: JSON.stringify(filters)
+        };
+        logger.info(`Requesting all stages for user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
+
+        // Use GET and pass parameters in the config object
+        const response = await apiClient.get<Stage[]>(url, {params});
+        logger.info(`Successfully fetched all job applications for user: ${callingUserId}`);
+        return response.data;
+    } catch (error) {
+        logger.error(`Failed to fetch all job applications for user: ${callingUserId}`, {error});
+        throw error;
+    }
+}
+
+/**
  * Fetches a single stage by its ID.
- * Authorization filters are sent in the body payload.
  */
 export const getStageById = (apiClient: AxiosInstance, logger: Logger) => async (
     callingUserId: string,
@@ -27,12 +54,12 @@ export const getStageById = (apiClient: AxiosInstance, logger: Logger) => async 
         logger.info(`Requesting stage with ID: ${stageId} for user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
 
         // Use GET to send the parameters via query string
-        const response = await apiClient.get<Stage>(path, { params });
+        const response = await apiClient.get<Stage>(path, {params});
 
         logger.info(`Successfully fetched stage with ID: ${stageId} for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Failed to fetch stage with ID: ${stageId} for user: ${callingUserId}`, { error });
+        logger.error(`Failed to fetch stage with ID: ${stageId} for user: ${callingUserId}`, {error});
         throw error;
     }
 };
@@ -60,7 +87,7 @@ export const createStage = (apiClient: AxiosInstance, logger: Logger) => async (
         logger.info(`Successfully created a new stage for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Failed to create a new stage for user: ${callingUserId}`, { error });
+        logger.error(`Failed to create a new stage for user: ${callingUserId}`, {error});
         throw error;
     }
 };
@@ -91,7 +118,7 @@ export const updateStage = (apiClient: AxiosInstance, logger: Logger) => async (
         logger.info(`Successfully updated stage with ID: ${stageId} for user: ${callingUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Failed to update stage with ID: ${stageId} for user: ${callingUserId}`, { error });
+        logger.error(`Failed to update stage with ID: ${stageId} for user: ${callingUserId}`, {error});
         throw error;
     }
 };
@@ -116,10 +143,10 @@ export const deleteStage = (apiClient: AxiosInstance, logger: Logger) => async (
         logger.info(`Deleting stage with ID: ${stageId} for user: ${callingUserId} from URL: ${url}. Filters: ${JSON.stringify(filters)}`);
 
         // Axios's DELETE method supports sending a body via the 'data' config property
-        await apiClient.delete(path, { data: payload });
+        await apiClient.delete(path, {data: payload});
         logger.info(`Successfully deleted stage with ID: ${stageId} for user: ${callingUserId}`);
     } catch (error) {
-        logger.error(`Failed to delete stage with ID: ${stageId} for user: ${callingUserId}`, { error });
+        logger.error(`Failed to delete stage with ID: ${stageId} for user: ${callingUserId}`, {error});
         throw error;
     }
 };
