@@ -252,10 +252,16 @@ components:
           example: 3600000 # 1 hour
         stageType:
           $ref: '#/components/schemas/StageType'
+        stageField:
+          type: string
+          description: The stage field's date for the notification.
+          example: "completedAt"
+
       required:
         - userId
         - offsetMs
         - stageType
+        - stageField
 
     NotificationRuleUpdate:
       anyOf:

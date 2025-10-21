@@ -5,7 +5,8 @@ import {AuthenticatedRequest} from '../interfaces/authenticatedRequest';
 import {dbClient} from "../config/dbClient";
 import {FilterMiddlewareRequest} from "../middleware/filterMiddleware";
 
-import {NotificationRule} from "./index"; // Assuming NotificationRule is imported
+import {NotificationRule} from "./index";
+import {pushTransaction} from "../config/redisClient";
 
 const notificationRuleRouter = Router();
 
@@ -69,10 +70,12 @@ notificationRuleRouter.post('/', async (req: AuthenticatedRequest, res: Response
         logger.info(`Attempting to create a new notification rule for user: ${userId}`);
         const newRule: NotificationRule | null = await dbClient.notificationRules.create(userId, req.body);
 
-        if (!newRule) {
+        if (!newRule?._id) {
             logger.error(`Failed to create notification rule for user: ${userId}. DB Client returned null.`);
             return res.status(500).send('Failed to create notification rule.');
         }
+
+        await pushTransaction('Rule', 'CREATE', userId.toString(), newRule._id.toString());
 
         logger.info(`Successfully created new rule with ID: ${newRule._id} for user: ${userId}`);
         return res.status(201).json(newRule);
@@ -96,10 +99,13 @@ notificationRuleRouter.put('/:ruleId', async (req: FilterMiddlewareRequest<Notif
         logger.info(`Attempting to update rule with ID: ${ruleId} for user: ${userId}`);
         const updated: NotificationRule | null = await dbClient.notificationRules.update(userId, ruleId, req.body, filters);
 
-        if (!updated) {
+        if (!updated?._id) {
             logger.warn(`Update failed: Rule ID: ${ruleId} not found or update failed for user: ${userId}`);
             return res.status(404).json({error: 'Notification rule not found or update failed.'});
         }
+
+        await pushTransaction('Rule', 'DELETE', userId.toString(), ruleId)
+        await pushTransaction('Rule', 'CREATE', userId.toString(), updated._id.toString())
 
         logger.info(`Successfully updated rule with ID: ${ruleId} for user: ${userId}`);
         return res.status(200).json(updated);
@@ -127,6 +133,8 @@ notificationRuleRouter.delete('/:ruleId', async (req: FilterMiddlewareRequest<No
             logger.warn(`Deletion failed: Rule ID: ${ruleId} not found or delete failed for user: ${userId}`);
             return res.status(404).json({error: 'Notification rule not found or delete failed.'});
         }
+
+        await pushTransaction('Rule', 'DELETE', userId.toString(), ruleId)
 
         logger.info(`Successfully deleted rule with ID: ${ruleId} for user: ${userId}`);
         return res.status(200).json({message: 'Notification rule deleted successfully.'});
