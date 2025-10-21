@@ -26,7 +26,7 @@ export const UserProvider = ({children}: { children: ReactNode }) => {
         const fetchUser = async () => {
             try {
                 const res = await fetchCurrentUser();
-                setUser({id: res.id, name: res.username});
+                setUser({id: res._id, name: res.username});
             } catch (error) {
                 // If the cookie is expired or invalid, the request will fail
                 setUser(null);

@@ -1,8 +1,8 @@
-import {Box, Grid, styled, Typography} from '@mui/material';
-import {metricsConfig, type MetricsData} from "../../models/DashboardMetrics.ts";
-import JobApplication from "../../models/JobApplication.ts";
+import { Box, Grid, styled, Typography } from '@mui/material';
+import { metricsConfig, type MetricsData } from "../../models/DashboardMetrics.ts";
+import { type JobApplication } from "../../models/JobApplication.ts";
 
-const StyledMetricCard = styled(Box)(({theme}) => ({
+const StyledMetricCard = styled(Box)(({ theme }) => ({
     padding: theme.spacing(2),
     borderRadius: theme.shape.borderRadius,
     backgroundColor: theme.palette.background.paper,
@@ -19,7 +19,7 @@ const StyledMetricCard = styled(Box)(({theme}) => ({
 
 const StyledIconButton = styled(Box)<{
     color: string
-}>(({color}) => ({
+}>(({ color }) => ({
     width: 48,
     height: 48,
     borderRadius: '12px',
@@ -37,14 +37,14 @@ const Metrics = (jobData: JobApplication[]) => {
         const totalApplications = jobs.length;
         const inProgress = jobs.filter(
             (job) =>
-                !['rejected', 'withdrawn', 'offer'].includes(job.currentStage),
+                !['rejected', 'withdrawn', 'offer'].includes(job.lastStageType),
         ).length;
         const interviews = jobs.filter((job) =>
             ['phone_screen', 'technical_interview', 'final_interview'].includes(
-                job.currentStage,
+                job.lastStageType,
             ),
         ).length;
-        const offers = jobs.filter((job) => job.currentStage === 'offer').length;
+        const offers = jobs.filter((job) => job.lastStageType === 'offer').length;
 
         return {
             total: totalApplications,
@@ -58,12 +58,12 @@ const Metrics = (jobData: JobApplication[]) => {
     const metrics: MetricsData = calculateMetrics(jobData);
 
     return (
-        <Grid container spacing={5} sx={{mb: 4}} >
+        <Grid container spacing={5} sx={{ mb: 4 }} >
             {(Object.entries(metrics) as [keyof MetricsData, number][]).map(([key, value]) => {
-                const {icon: IconComponent, color: iconColor, title} = metricsConfig[key];
+                const { icon: IconComponent, color: iconColor, title } = metricsConfig[key];
 
                 return (
-                    <Grid key={key} sx={{xs: 12, sm: 6, md: 3}}>
+                    <Grid key={key} sx={{ xs: 12, sm: 6, md: 3 }}>
                         <StyledMetricCard>
                             <Box>
                                 <Typography variant="body2" color="text.secondary">
@@ -74,7 +74,7 @@ const Metrics = (jobData: JobApplication[]) => {
                                 </Typography>
                             </Box>
                             <StyledIconButton color={iconColor}>
-                                <IconComponent sx={{fontSize: '2rem'}}/>
+                                <IconComponent sx={{ fontSize: '2rem' }} />
                             </StyledIconButton>
                         </StyledMetricCard>
                     </Grid>
