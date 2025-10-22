@@ -6,6 +6,8 @@ import {dbClient} from "../config/dbClient";
 import {FilterMiddlewareRequest} from "../middleware/filterMiddleware";
 
 import {JobApplication, JobApplicationPopulatedStage} from "./index";
+import { JobApplicationResponse } from '../interfaces/JobApplicationResponse';
+import { formatJobApplicationResponse } from '../utils/jobApplicationFormat';
 
 const jobApplicationRouter = Router();
 
@@ -24,7 +26,8 @@ jobApplicationRouter.get('/', async (req: FilterMiddlewareRequest<JobApplication
             return res.status(200).json([]);
         }
         logger.info(`Successfully retrieved ${applications.length} applications for user: ${userId}`);
-        return res.status(200).json(applications);
+        const applicationsResponse: JobApplicationResponse[] = applications.map(app => formatJobApplicationResponse(app));
+        return res.status(200).json(applicationsResponse);
     } catch (error) {
         logger.error(`Failed to retrieve all job applications for user: ${userId}.`, {error});
         return res.status(500).json({error: 'Failed to retrieve job applications.'});
@@ -47,7 +50,8 @@ jobApplicationRouter.get('/:applicationId', async (req: FilterMiddlewareRequest<
             return res.status(404).json({error: 'Job application not found.'});
         }
         logger.info(`Successfully retrieved application with ID: ${applicationId}`);
-        return res.status(200).json(application);
+        const applicationResponse: JobApplicationResponse = formatJobApplicationResponse(application);
+        return res.status(200).json(applicationResponse);
     } catch (error) {
         logger.error(`Failed to retrieve application with ID: ${applicationId} for user: ${userId}.`, {error});
         return res.status(500).json({error: 'Failed to retrieve job application.'});
@@ -93,7 +97,8 @@ jobApplicationRouter.post('/', async (req: AuthenticatedRequest, res: Response) 
             return res.status(500).send('Failed to create job application.');
         }
         logger.info(`Successfully created new application with ID: ${newApplication._id} for user: ${userId}`);
-        return res.status(201).json(newApplication);
+        const newApplicationResponse: JobApplicationResponse = formatJobApplicationResponse(newApplication);
+        return res.status(201).json(newApplicationResponse);
     } catch (error) {
         logger.error(`Failed to create job application for user: ${userId}. Check provided data.`, {error});
         return res.status(400).json({error: 'Failed to create job application. Please check the data provided.'});
@@ -116,7 +121,8 @@ jobApplicationRouter.put('/:applicationId', async (req: FilterMiddlewareRequest<
             return res.status(404).json({error: 'Job application not found or update failed.'});
         }
         logger.info(`Successfully updated application with ID: ${applicationId}`);
-        return res.status(200).json(updated);
+        const applicationResponse: JobApplicationResponse = formatJobApplicationResponse(updated);
+        return res.status(200).json(applicationResponse);
     } catch (error) {
         logger.error(`Failed to update application with ID: ${applicationId} for userId: ${userId}.`, {error});
         return res.status(500).json({error: 'Failed to update job application.'});

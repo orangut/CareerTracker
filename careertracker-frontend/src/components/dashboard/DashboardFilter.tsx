@@ -12,7 +12,7 @@ interface DashboardFilterProps {
 const DashboardFilter: React.FC<DashboardFilterProps> = ({ onFilteredJobsChange, jobData }) => {
     const [filters, setFilters] = React.useState({
         freeText: '',
-        currentStage: '',
+        lastStageType: '',
         interestLevel: 0,
         remoteOption: '',
     });
@@ -23,13 +23,13 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({ onFilteredJobsChange,
                 filters.freeText === '' ||
                 job.position.toLowerCase().includes(filters.freeText.toLowerCase()) ||
                 job.company.toLowerCase().includes(filters.freeText.toLowerCase());
-            const matchesCurrentStage =
-                filters.currentStage === '' || job.currentStage === filters.currentStage;
+            const matcheslastStageType =
+                filters.lastStageType === '' || job.lastStageType === filters.lastStageType;
             const matchesInterestLevel = Number(job.interestLevel) >= Number(filters.interestLevel);
             const matchesRemoteOption =
                 filters.remoteOption === '' || job.remoteOption === filters.remoteOption;
 
-            return matchesFreeText && matchesCurrentStage && matchesInterestLevel && matchesRemoteOption;
+            return matchesFreeText && matcheslastStageType && matchesInterestLevel && matchesRemoteOption;
         });
 
         onFilteredJobsChange(filteredJobs);
@@ -40,9 +40,9 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({ onFilteredJobsChange,
         setFilters((prev) => ({ ...prev, freeText: newFreeText }));
     };
 
-    const handleCurrentStageChange = (event: SelectChangeEvent) => {
-        const newCurrentStage = event.target.value;
-        setFilters((prev) => ({ ...prev, currentStage: newCurrentStage }));
+    const handlelastStageTypeChange = (event: SelectChangeEvent) => {
+        const newlastStageType = event.target.value;
+        setFilters((prev) => ({ ...prev, lastStageType: newlastStageType }));
     };
 
     const handleInterestLevelChange = (event: SelectChangeEvent<string | number>) => {
@@ -94,9 +94,9 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({ onFilteredJobsChange,
                 <FormControl sx={{ minWidth: 160 }}>
                     <InputLabel>All Stages</InputLabel>
                     <Select
-                        value={filters.currentStage}
+                        value={filters.lastStageType}
                         label="All Stages"
-                        onChange={handleCurrentStageChange}
+                        onChange={handlelastStageTypeChange}
                     >
                         <MenuItem value="">
                             <em>All Stages</em>
@@ -121,7 +121,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({ onFilteredJobsChange,
                         </MenuItem>
                         {allInterestLevels.map((level) => (
                             <MenuItem key={level} value={level}>
-                                {level === 0 ? 'Not Interested' : `Level ${level}`}
+                                {level === 0 ? 'Not Interested' : `Level ${level / 2.0}`}
                             </MenuItem>
                         ))}
                     </Select>

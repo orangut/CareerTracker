@@ -1,3 +1,5 @@
+import type { Stage } from "./stage";
+
 export const allStages = [
     'applied',
     'phone_screen',
@@ -8,7 +10,7 @@ export const allStages = [
     'withdrawn',
 ] as const;
 
-export const allInterestLevels = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5] as const;
+export const allInterestLevels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 export const allRemoteOptions = ['remote', 'hybrid', 'onsite'] as const;
 
@@ -18,18 +20,19 @@ export type AllRemoteOptionsType = typeof allRemoteOptions[number];
 
 
 export type JobApplication = {
-    id: string;
+    _id: string;
+    userId: string;
     company: string;
     position: string;
     location: string;
     applicationDate: Date | string;
     interestLevel: AllInterestLevelsType;
-    currentStage: AllStagesType;
+    lastStageType: AllStagesType;
     salaryMin?: number;
     salaryMax?: number;
     remoteOption: AllRemoteOptionsType;
     jobUrl: string;
     isEdit: boolean;
     notes?: string[];
-    stages?: string[];
+    stages?: Stage[];
 }

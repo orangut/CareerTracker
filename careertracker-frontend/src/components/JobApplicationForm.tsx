@@ -7,7 +7,6 @@ import {
     IconButton,
     InputLabel,
     MenuItem,
-    Rating,
     Select,
     type SelectChangeEvent,
     Stack,
@@ -21,26 +20,28 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from 'react-router-dom';
 
 import { useJobApplications } from '../context/JobApplicationContext';
-import { type AllInterestLevelsType, allRemoteOptions, allStages, type JobApplication } from '../models/JobApplication';
+import { type AllInterestLevelsType, allRemoteOptions, type JobApplication } from '../models/JobApplication';
+import StarRaiting from './starRaiting';
 
 // Define the default empty job application state for new entries
-const DEFAULT_JOB_APPLICATION_STATE: Omit<JobApplication, 'id' | 'isEdit'> = {
+const DEFAULT_JOB_APPLICATION_STATE: Omit<JobApplication, '_id' | 'userId'> = {
     company: '',
     position: '',
     location: '',
     applicationDate: new Date().toISOString().split('T')[0],
     interestLevel: 0,
-    currentStage: 'applied',
+    lastStageType: 'applied',
     salaryMin: undefined,
     salaryMax: undefined,
     remoteOption: 'hybrid',
     notes: undefined,
     jobUrl: '',
+    isEdit: true,
 };
 
 interface ApplicationFormProps {
     applicationJobId?: string | null;
-    onSubmit: (jobData: Omit<JobApplication, 'id' | 'isEdit'>) => void;
+    onSubmit: (jobData: Omit<JobApplication, '_id' | 'userId'>) => Promise<void>;
     onGoBackRoute: string;
     headerText: string;
     bodyText: string;
@@ -48,26 +49,27 @@ interface ApplicationFormProps {
 }
 
 const JobApplicationForm: React.FC<ApplicationFormProps> = ({
-                                                                applicationJobId = null,
-                                                                onSubmit,
-                                                                onGoBackRoute,
-                                                                headerText,
-                                                                bodyText,
-                                                                buttonText
-                                                            }) => {
+    applicationJobId = null,
+    onSubmit,
+    onGoBackRoute,
+    headerText,
+    bodyText,
+    buttonText
+}) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const { readJobApplication } = useJobApplications();
     const navigate = useNavigate();
 
-    const [formState, setFormState] = useState<Omit<JobApplication, 'id' | 'isEdit'>>(DEFAULT_JOB_APPLICATION_STATE);
+    const [formState, setFormState] = useState<Omit<JobApplication, '_id' | 'userId'>>(DEFAULT_JOB_APPLICATION_STATE);
+    const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (applicationJobId) {
             const jobToEdit = readJobApplication(applicationJobId);
             if (jobToEdit) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { id, isEdit, ...restOfJob } = jobToEdit;
+                const { _id: id, ...restOfJob } = jobToEdit;
                 setFormState(restOfJob);
             }
         } else {
@@ -75,16 +77,33 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
         }
     }, [applicationJobId, readJobApplication]);
 
-    const validateAndSubmit = () => {
-        if (formState.company && formState.position && formState.currentStage) {
-            onSubmit(formState);
-        } else {
-            // Optional: Add some visual feedback for validation failure
-            console.error("Please fill out all required fields.");
+    const validateAndSubmit = async () => {
+        try {
+            if (formState.company && formState.position) {
+                await onSubmit(formState);
+                navigate(onGoBackRoute);
+            } else {
+                // Optional: Add some visual feedback for validation failure
+                setErrorMsg("Please fill out all required fields.");
+            }
+        } catch (error) {
+            setErrorMsg("An error occurred while submitting the form.");
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value, type } = e.target;
+        let newValue: any = value;
+        if (type === 'date') {
+            newValue = new Date(value).toISOString();
+        }
+        else if (name === 'notes') {
+            newValue = [value];
+        }
+        setFormState(prev => ({ ...prev, [name]: newValue }));
+    };
+
+    const handleSelectionChange = (e: SelectChangeEvent<string>) => {
         const { name, value } = e.target;
         setFormState(prev => ({ ...prev, [name]: value }));
     };
@@ -111,7 +130,7 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
         const { name } = e.target;
         setFormState(prev => {
             const newState = { ...prev };
-            if (newState.salaryMin && newState.salaryMax ) {
+            if (newState.salaryMin && newState.salaryMax) {
                 if (name === 'salaryMin' && newState.salaryMin > newState.salaryMax) {
                     newState.salaryMax = newState.salaryMin;
                 } else if (name === 'salaryMax' && newState.salaryMax < newState.salaryMin) {
@@ -196,7 +215,7 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
                             name="applicationDate"
                             label="Application Date"
                             type="date"
-                            value={formState.applicationDate}
+                            value={new Date(formState.applicationDate).toISOString().split('T')[0]}
                             onChange={handleChange}
                             required
                             fullWidth
@@ -204,27 +223,12 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
                     </Stack>
                     <Stack direction={isMobile ? "column" : "row"} spacing={2}>
                         <FormControl fullWidth required>
-                            <InputLabel>Current Stage</InputLabel>
-                            <Select
-                                name="currentStage"
-                                value={formState.currentStage}
-                                label="Current Stage"
-                                onChange={handleChange}
-                            >
-                                {allStages.map((stage) => (
-                                    <MenuItem key={stage} value={stage}>
-                                        {stage.replace('_', ' ')}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <FormControl fullWidth required>
                             <InputLabel>Remote Option</InputLabel>
                             <Select
                                 name="remoteOption"
                                 value={formState.remoteOption}
                                 label="Remote Option"
-                                onChange={handleChange}
+                                onChange={handleSelectionChange}
                             >
                                 {allRemoteOptions.map((option) => (
                                     <MenuItem key={option} value={option}>
@@ -233,9 +237,17 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
                                 ))}
                             </Select>
                         </FormControl>
+                        <TextField
+                            name="jobUrl"
+                            label="Job URL"
+                            value={formState.jobUrl}
+                            onChange={handleChange}
+                            fullWidth
+                            required
+                        />
                     </Stack>
                     <Stack direction={isMobile ? "column" : "row"} spacing={3} justifyContent="space-between"
-                           alignItems="center">
+                        alignItems="center">
                         <Stack direction="row" spacing={2} maxWidth={'70%'}>
                             <TextField
                                 name="salaryMin"
@@ -259,11 +271,9 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
                         <Stack direction="row" flexGrow={1}>
                             <Stack alignItems="center">
                                 <Typography variant="body1" color="text.secondary">Interest Level</Typography>
-                                <Rating
-                                    name="interestLevel"
+                                <StarRaiting
                                     value={formState.interestLevel}
                                     onChange={handleRatingChange}
-                                    precision={0.5}
                                 />
                             </Stack>
                             {formState.interestLevel > 0 && (
@@ -273,14 +283,7 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
                             )}
                         </Stack>
                     </Stack>
-                    <TextField
-                        name="jobUrl"
-                        label="Job URL"
-                        value={formState.jobUrl}
-                        onChange={handleChange}
-                        fullWidth
-                        required
-                    />
+
                     <Stack>
                         <Box sx={{ display: 'block', width: '100%' }}>
                             <TextField
@@ -304,6 +307,7 @@ const JobApplicationForm: React.FC<ApplicationFormProps> = ({
                     <Button variant="contained" onClick={validateAndSubmit} fullWidth>
                         {buttonText}
                     </Button>
+                    {errorMsg && <Typography color="error" variant="body2">{errorMsg}</Typography>}
                 </Stack>
             </Box>
         </Container>

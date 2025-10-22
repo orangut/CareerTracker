@@ -15,8 +15,6 @@ const Dashboard = () => {
 
     const [filteredJobs, setFilteredJobs] = React.useState<JobApplication[]>(jobApplications);
 
-    // const theme = useTheme();
-    // const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     return (
         <Box sx={{py: 4, minHeight: '100vh', bgcolor: 'background.default'}}>
             <Container maxWidth={false} sx={{py: 4}}>
@@ -54,7 +52,7 @@ const Dashboard = () => {
                 <Grid container spacing={2}>
                     {filteredJobs.length > 0 ? (
                         filteredJobs.map((job) => (
-                            <Grid key={job.id}>
+                            <Grid key={job._id}>
                                 <JobApplicationCard job={job}/>
                             </Grid>
                         ))
