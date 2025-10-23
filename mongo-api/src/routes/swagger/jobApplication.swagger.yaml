@@ -9,7 +9,7 @@ tags:
     description: Job application management
 
 paths:
-  /api/job-applications:
+  /api/job-application:
     post:
       tags:
         - JobApplication
@@ -58,7 +58,7 @@ paths:
         '500':
           description: Failed to fetch job applications
 
-  /api/job-applications/{id}:
+  /api/job-application/{id}:
     get:
       tags:
         - JobApplication

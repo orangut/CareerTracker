@@ -9,6 +9,35 @@ import {Stage} from "./index"
 
 const stageRouter = Router();
 
+// Route to get all stages by userId and filters
+stageRouter.get('/', async (req: FilterMiddlewareRequest<Stage>, res: Response) => {
+    try {
+        const {userId, filters} = req;
+
+        if (!userId) {
+            logger.warn('Unauthorized attempt to access all stages without user ID.');
+            return res.status(403).send('Not authorized');
+        }
+
+        logger.info(`Fetching all stages for user: ${userId} with filters: ${JSON.stringify(filters)}`);
+        // Assuming dbClient.stages.getAll is the correct method
+        const stages = await dbClient.stages.getAllLastStages(userId, filters);
+
+        if (!stages || stages.length === 0) {
+            logger.info(`No stages found for user: ${userId} with provided filters.`);
+            // Returning 200 with an empty array if no stages are found is often preferred
+            return res.status(200).json([]);
+        }
+
+        logger.info(`Successfully retrieved ${stages.length} stages for user: ${userId}`);
+        return res.status(200).json(stages);
+    } catch (error) {
+        logger.error(`Failed to retrieve all stages for user: ${req.userId}.`, {error});
+        return res.status(500).json({error: 'Failed to retrieve stages.'});
+    }
+});
+
+
 // Route to get a single stage by ID
 stageRouter.get('/:stageId', async (req: FilterMiddlewareRequest<Stage>, res: Response) => {
     try {

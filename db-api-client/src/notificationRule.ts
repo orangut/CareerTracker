@@ -6,7 +6,6 @@ import { Logger } from 'winston';
 
 /**
  * Fetches all notification rules visible to the calling user.
- * 🐛 FIX: Switched from POST to GET and sends filters as URL query parameters.
  */
 export const getAllNotificationRules = (apiClient: AxiosInstance, logger: Logger) => async (
     callingUserId: string, // The ID of the user making the request (for auth context)
@@ -35,7 +34,6 @@ export const getAllNotificationRules = (apiClient: AxiosInstance, logger: Logger
 
 /**
  * Fetches a single notification rule by its ID.
- * 🐛 FIX: Switched from POST to GET and sends context/filters as URL query parameters.
  */
 export const getNotificationRuleById = (apiClient: AxiosInstance, logger: Logger) => async (
     callingUserId: string,
@@ -65,7 +63,7 @@ export const getNotificationRuleById = (apiClient: AxiosInstance, logger: Logger
 };
 
 /**
- * Creates a new notification rule. (Correctly uses POST)
+ * Creates a new notification rule.
  * The data payload is wrapped in MyRequestBody; filters are empty.
  */
 export const createNotificationRule = (apiClient: AxiosInstance, logger: Logger) => async (
@@ -93,7 +91,7 @@ export const createNotificationRule = (apiClient: AxiosInstance, logger: Logger)
 };
 
 /**
- * Updates an existing notification rule. (Correctly uses PUT)
+ * Updates an existing notification rule.
  * Authorization filters are passed along with the update data.
  */
 export const updateNotificationRule = (apiClient: AxiosInstance, logger: Logger) => async (
@@ -124,7 +122,7 @@ export const updateNotificationRule = (apiClient: AxiosInstance, logger: Logger)
 };
 
 /**
- * Deletes a notification rule by its ID. (Correctly uses DELETE)
+ * Deletes a notification rule by its ID.
  * Authorization filters are sent in the body payload via Axios's delete config.
  */
 export const deleteNotificationRule = (apiClient: AxiosInstance, logger: Logger) => async (

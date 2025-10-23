@@ -205,18 +205,44 @@ paths:
 
 components:
   schemas:
+    StageType:
+      type: string
+      enum:
+        - applied
+        - phone_screen
+        - technical_interview
+        - final_interview
+        - offer
+        - rejected
+        - withdrawn
+      description: The current status or type of the stage.
+      example: applied
+
     NotificationRule:
+      allOf:
+        - type: object
+          properties:
+            _id:
+              type: string
+              format: objectid
+              description: The unique identifier for the rule (MongoDB ObjectId).
+              example: 60d5ec49f6c3f1001550c8e2
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+        - $ref: '#/components/schemas/NotificationRuleCreate'
+
+    NotificationRuleCreate:
       type: object
       properties:
-        _id:
-          type: string
-          format: objectid
-          description: The unique identifier for the rule (MongoDB ObjectId).
-          example: 60d5ec49f6c3f1001550c8e2
         userId:
           type: string
           format: objectid
           description: The ID of the user who owns this rule.
+          example: 68dab848806c678486602d51
         offsetMs:
           type: number
           format: int64
@@ -224,43 +250,16 @@ components:
             The offset in milliseconds from a relevant application event (e.g., interview time).
             Must be within ±4 weeks ($$\pm 2419200000$$ ms) and in increments of 30 minutes ($$1800000$$ ms).
           example: 3600000 # 1 hour
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
+        stageType:
+          $ref: '#/components/schemas/StageType'
       required:
         - userId
         - offsetMs
-        - createdAt
-        - updatedAt
-
-    NotificationRuleCreate:
-      type: object
-      properties:
-        offsetMs:
-          type: number
-          format: int64
-          description: |
-            The offset in milliseconds from a relevant application event (e.g., interview time).
-            Must be within ±4 weeks ($$\pm 2419200000$$ ms) and in increments of 30 minutes ($$1800000$$ ms).
-          example: -1800000 # 30 minutes before
-      required:
-        - offsetMs
+        - stageType
 
     NotificationRuleUpdate:
-      type: object
-      properties:
-        offsetMs:
-          type: number
-          format: int64
-          description: |
-            The offset in milliseconds from a relevant application event (e.g., interview time).
-            Must be within ±4 weeks ($$\pm 2419200000$$ ms) and in increments of 30 minutes ($$1800000$$ ms).
-          example: 7200000 # 2 hours after
-      minProperties: 1
-      description: Only 'offsetMs' can be updated.
+      anyOf:
+        - $ref: '#/components/schemas/NotificationRuleCreate'
 
     Error:
       type: object

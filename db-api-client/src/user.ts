@@ -1,25 +1,7 @@
-import { AxiosInstance } from 'axios';
-// Assuming User, and specific data types are defined in interfaces
-import { User, UserCreateData, UserUpdateData } from './interfaces';
-import { BASE_PATH_USERS } from './constants';
-import { Logger } from 'winston';
-
-/**
- * Filters must only contain keys that exist on the generic type F.
- */
-type Filters<F> = Partial<F>;
-
-/**
- * Wrapper for all requests sent to the Mongo API service.
- * F is the type being filtered (e.g., User, JobApplication).
- * D is the data payload for mutations (e.g., UserCreateData).
- */
-interface MyRequestBody<F, D = undefined> {
-    filters?: Filters<F>;
-    data?: D;
-    userId: string; // The ID of the user context making the request
-}
-
+import {AxiosInstance} from 'axios';
+import {Filters, MyRequestBody, User, UserCreateData, UserUpdateData} from './interfaces';
+import {BASE_PATH_USERS} from './constants';
+import {Logger} from 'winston';
 
 /**
  * Retrieves all the users visible to the calling user.
@@ -42,11 +24,11 @@ export const getUsers = (apiClient: AxiosInstance, logger: Logger) => async (
         logger.info(`Requesting all users with context user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
 
         // Use GET and pass parameters in the config object
-        const response = await apiClient.get<User[]>(url, { params });
+        const response = await apiClient.get<User[]>(url, {params});
         logger.info(`Successfully fetched all users.`);
         return response.data;
     } catch (error) {
-        logger.error("Error fetching all users:", { error });
+        logger.error("Error fetching all users:", {error});
         return null;
     }
 };
@@ -62,7 +44,7 @@ export const getByUsername = (apiClient: AxiosInstance, logger: Logger) => async
 ): Promise<User | null> => {
     try {
         // We merge the required username lookup filter with the authorization filters
-        const combinedFilters: Filters<User> = { ...authFilters, username };
+        const combinedFilters: Filters<User> = {...authFilters, username};
 
         // Use a path that reflects the lookup method (or the base path if using a generic query param)
         // I will use the path `/username/${username}` and pass the auth context in params.
@@ -78,11 +60,11 @@ export const getByUsername = (apiClient: AxiosInstance, logger: Logger) => async
         logger.info(`Requesting user by username: ${username} for context user: ${callingUserId}. Filters: ${JSON.stringify(combinedFilters)}`);
 
         // Use GET and pass parameters in the config object
-        const response = await apiClient.get<User | null>(path, { params });
+        const response = await apiClient.get<User | null>(path, {params});
         logger.info(`Successfully fetched user by username: ${username}`);
         return response.data;
     } catch (error) {
-        logger.error(`Error fetching user by username: ${username}`, { error });
+        logger.error(`Error fetching user by username: ${username}`, {error});
         return null;
     }
 };
@@ -109,11 +91,11 @@ export const getUserById = (apiClient: AxiosInstance, logger: Logger) => async (
         logger.info(`Requesting user by ID: ${targetUserId} with context user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
 
         // Use GET and pass parameters in the config object
-        const response = await apiClient.get<User>(path, { params });
+        const response = await apiClient.get<User>(path, {params});
         logger.info(`Successfully fetched user by ID: ${targetUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Error fetching user by ID: ${targetUserId}`, { error });
+        logger.error(`Error fetching user by ID: ${targetUserId}`, {error});
         throw error;
     }
 };
@@ -142,7 +124,7 @@ export const createUserProfile = (apiClient: AxiosInstance, logger: Logger) => a
         logger.info(`Successfully created a new user profile.`);
         return response.data;
     } catch (error) {
-        logger.error(`Error creating a new user profile.`, { error });
+        logger.error(`Error creating a new user profile.`, {error});
         throw error;
     }
 };
@@ -173,7 +155,7 @@ export const updateUserProfile = (apiClient: AxiosInstance, logger: Logger) => a
         logger.info(`Successfully updated user profile with ID: ${targetUserId}`);
         return response.data;
     } catch (error) {
-        logger.error(`Error updating user profile with ID: ${targetUserId}`, { error });
+        logger.error(`Error updating user profile with ID: ${targetUserId}`, {error});
         throw error;
     }
 };
@@ -198,10 +180,10 @@ export const deleteUserProfile = (apiClient: AxiosInstance, logger: Logger) => a
         logger.info(`Deleting user profile with ID: ${targetUserId} from URL: ${url} with context user: ${callingUserId}. Filters: ${JSON.stringify(filters)}`);
 
         // Axios's DELETE method supports sending a body via the 'data' config property
-        await apiClient.delete(path, { data: payload });
+        await apiClient.delete(path, {data: payload});
         logger.info(`Successfully deleted user profile with ID: ${targetUserId}`);
     } catch (error) {
-        logger.error(`Error deleting user profile with ID: ${targetUserId}`, { error });
+        logger.error(`Error deleting user profile with ID: ${targetUserId}`, {error});
         throw error;
     }
 };

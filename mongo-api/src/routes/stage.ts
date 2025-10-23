@@ -25,6 +25,50 @@ type UpdateStageReq = MyRequestType<Stage, StageUpdateData>;
 type DeleteStageReq = MyRequestType<Stage>;
 
 
+// The 'filters' parameter now expects an ARRAY of match conditions
+const getPipeline = (flatFilters: object = {}) => {
+    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(flatFilters)
+
+    // Define the single list of conditions for the $and operator
+    const matchConditions: object[] = [];
+
+    if (extractedUserId) matchConditions.push({"jobApp.userId": extractedUserId});
+
+    // Add the flat filter object as a single condition if it's not empty
+    if (Object.keys(otherFilters).length > 0) {
+        // Pushing the single object {keyA: valueA, keyB: valueB}
+        // as one element in the $and array.
+        matchConditions.push(otherFilters);
+    }
+    return [
+        // 1. $lookup (Join)
+        {
+            $lookup: {
+                from: "job_applications",
+                localField: "jobApplicationId",
+                foreignField: "_id",
+                as: "jobApp",
+            },
+        },
+        // 2. $unwind
+        {
+            $unwind: "$jobApp",
+        },
+        // 3. $match: Use $and to ensure all conditions are met
+        {
+            $match: {
+                $and: matchConditions,
+            },
+        },
+        // 4. $project: Reshape the output
+        {
+            $project: {
+                jobApp: 0,
+            },
+        },
+    ];
+};
+
 // Create Stage
 stageRouter.post('/', async (req: CreateStageReq, res: Response) => {
     const userId = req?.authContext?.userId;
@@ -71,30 +115,66 @@ stageRouter.post('/', async (req: CreateStageReq, res: Response) => {
     }
 });
 
+// Route to get all last stages by userId and filters
+stageRouter.get("/last-stages", async (req: GetStageReq, res: Response) => {
+    const userId = req?.authContext?.userId;
+    const filters = req?.authContext?.filters;
+
+    try {
+        if (!userId) {
+            logger.warn('Unauthorized attempt to access all stages without userId in authContext.');
+            return res.status(403).json({error: 'Not authorized'});
+        }
+
+        logger.info(`Fetching 'last stages' for user: ${userId} with filters: ${JSON.stringify(filters)}`);
+
+        // Define the specific filter to find only the last stage
+        const lastStageFilter = {
+            $expr: {
+                $eq: ["$_id", "$jobApp.lastStageId"]
+            }
+        };
+
+        const pipeline = getPipeline({...filters, ...lastStageFilter});
+
+        // Execute the aggregation
+        const stages = await stagesCollection.aggregate<Stage>(pipeline).toArray();
+
+        if (!stages || stages.length === 0) {
+            logger.info(`No stages found for user: ${userId} with provided filters.`);
+            // Return 200 with an empty array if no stages are found
+            return res.status(200).json([]);
+        }
+
+        logger.info(`Successfully retrieved ${stages.length} stages for user: ${userId}`);
+        return res.status(200).json(stages);
+    } catch (err) {
+        logger.error(`Failed to retrieve all stages for user: ${userId}. Error: ${err}`);
+        return res.status(500).json({error: "Failed to retrieve stages."});
+    }
+});
+
 // Get stage by id
 stageRouter.get("/:id", validateObjectId, async (req: GetStageReq, res: Response) => {
     const userId = req?.authContext?.userId;
     const filters = req?.authContext?.filters;
-    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(filters)
 
     const {id} = req.params;
     const stageIdObject = new ObjectId(id as string);
 
     try {
-        // Lookup the stage using the provided ID and body filters
-        const stage = await stagesCollection.findOne({...otherFilters, _id: stageIdObject});
-
-        if (!stage) {
-            logger.warn(`Stage ${id} not found or unauthorized. UserId: ${userId}.`);
-            return res.status(404).json({error: `Stage ${id} not found or unauthorized.`});
+        if (!userId) {
+            logger.warn('Unauthorized attempt to access all stages without userId in authContext.');
+            return res.status(403).json({error: 'Not authorized'});
         }
 
-        const jobApplication = await jobApplicationsCollection.findOne({
-            userId: extractedUserId,
-            _id: stage?.jobApplicationId
-        })
+        const pipeline = getPipeline({...filters, _id: stageIdObject});
 
-        if (!jobApplication) {
+        // Execute the aggregation
+        // We expect only 0 or 1 result, so we take the first element [0]
+        const stage = await stagesCollection.aggregate<Stage>(pipeline).next();
+
+        if (!stage) {
             logger.warn(`Stage ${id} not found or unauthorized. UserId: ${userId}.`);
             return res.status(404).json({error: `Stage ${id} not found or unauthorized.`});
         }
@@ -111,48 +191,74 @@ stageRouter.get("/:id", validateObjectId, async (req: GetStageReq, res: Response
 stageRouter.put("/:id", validateObjectId, async (req: UpdateStageReq, res: Response) => {
     const userId = req?.authContext?.userId;
 
-    const filters = req?.authContext?.filters;
-    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(filters)
-
+    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(req.authContext?.filters)
     const data = req.authContext?.data;
 
-    const {id} = req.params;
+    const { id } = req.params;
     const stageIdObject = new ObjectId(id as string);
 
     try {
+        if (!userId) {
+            logger.warn('Unauthorized attempt to update stage without userId in authContext.');
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
         // 1. Validate incoming data
         const parseResult = StageUpdateSchema.safeParse(data);
         if (!parseResult.success) {
             logger.warn(`Failed to update stage ${id} due to validation error: ${parseResult.error.issues}. UserId: ${userId}`);
-            return res.status(400).json({error: parseResult.error.issues});
+            return res.status(400).json({ error: parseResult.error.issues });
         }
+
+        // --- AUTHENTICATION & JOB ID RETRIEVAL ---
+
+        // 2. Query the stage to get the jobApplicationId AND verify existence
+        const existingStage = await stagesCollection.findOne({ _id: stageIdObject, ...otherFilters });
+
+        if (!existingStage) {
+            logger.warn(`Stage with ID ${id} not found for update. UserId: ${userId}`);
+            return res.status(404).json({ error: "Not found" });
+        }
+
+        const jobApplicationId = existingStage.jobApplicationId;
+
+        const jobQueryFilters: Record<string, any> = {_id: jobApplicationId}
+        if (extractedUserId) jobQueryFilters['userId'] = extractedUserId;
+
+        // 3. Verify user ownership of the parent job application
+        const jobAppOwner = await jobApplicationsCollection.findOne(
+            jobQueryFilters,
+            { projection: { _id: 1 } } // Only fetch _id for performance
+        );
+
+        if (!jobAppOwner) {
+            // Stage found, but user doesn't own the associated job application
+            logger.warn(`Unauthorized attempt to update stage ${id}. User ${userId} does not own job application ${jobApplicationId}.`);
+            return res.status(403).json({ error: "Not authorized to modify this resource." });
+        }
+
+        // --- PERFORM THE UPDATE ---
 
         const updateData = parseResult.data;
         const updatedAt = new Date();
-        const update = {...updateData, updatedAt: updatedAt};
+        const update = { ...updateData, updatedAt: updatedAt };
 
-        // 2. Perform the update and get the updated document
+        // 4. Perform the update using only the stage _id (ownership is already verified)
         const updatedStageResult = await stagesCollection.findOneAndUpdate(
-            {...otherFilters, _id: stageIdObject},
-            {$set: update},
-            {returnDocument: 'after'}
+            { _id: stageIdObject },
+            { $set: update },
+            { returnDocument: 'after' }
         );
 
-        if (!updatedStageResult) {
-            logger.warn(`Stage with ID ${id} not found for update. UserId: ${userId}`);
-            return res.status(404).json({error: "Not found"});
-        }
-
-        const jobApplicationId = updatedStageResult.jobApplicationId;
-
-        // 3. Update the updateAt in JobApplication
-        await jobApplicationsCollection.updateOne({_id: jobApplicationId}, {$set: {updatedAt}});
+        // 5. Update the updateAt in JobApplication
+        await jobApplicationsCollection.updateOne({ _id: jobApplicationId }, { $set: { updatedAt } });
 
         logger.info(`Successfully updated stage with ID: ${id} for job application: ${jobApplicationId}. UserId: ${userId}`);
         res.json(updatedStageResult);
+
     } catch (err) {
         logger.error(`Error updating stage with ID ${id}: ${err}. UserId: ${userId}`);
-        res.status(500).json({error: "Failed to update stage"});
+        res.status(500).json({ error: "Failed to update stage" });
     }
 });
 
@@ -160,52 +266,61 @@ stageRouter.put("/:id", validateObjectId, async (req: UpdateStageReq, res: Respo
 stageRouter.delete("/:id", validateObjectId, async (req: DeleteStageReq, res: Response) => {
     const userId = req?.authContext?.userId;
 
-    const filters = req?.authContext?.filters;
-    const {extractedUserId, otherFilters} = separateUserIdFilterObject<Stage>(filters)
+    const filters = req?.authContext?.filters; // Filters passed from middleware (if any)
 
     const {id} = req.params;
-    const stageObjectId = new ObjectId(id as string);
+    const stageIdObject = new ObjectId(id as string);
 
     try {
-        // 1. Get the stage before deleting it to find the jobApplicationId
-        const stageToDelete = await stagesCollection.findOne({...otherFilters, _id: stageObjectId});
+        if (!userId) {
+            logger.warn('Unauthorized attempt to delete stage without userId in authContext.');
+            return res.status(403).json({error: 'Not authorized'});
+        }
+
+        // --- 1. Authorization and Existence Check ---
+        // Use the pipeline to check if the stage exists AND belongs to the user
+        const pipeline = getPipeline({...filters, _id: stageIdObject});
+
+        // Get the stage document that is authorized for deletion
+        const stageToDelete = await stagesCollection.aggregate<Stage>(pipeline).next();
 
         if (!stageToDelete) {
-            logger.warn(`Stage with ID ${id} not found for deletion. UserId: ${userId}`);
+            logger.warn(`Stage with ID ${id} not found or unauthorized for deletion. UserId: ${userId}`);
             return res.status(404).json({error: "Not found"});
         }
 
-        const jobApplicationId = stageToDelete.jobApplicationId;
+        const jobApplicationId = stageToDelete.jobApplicationId; // Correct variable
 
-        // 2. Delete the stage using filters
-        const result = await stagesCollection.deleteOne({...filters, _id: stageObjectId});
+        // --- 2. Delete the Stage ---
+        const result = await stagesCollection.deleteOne({_id: stageIdObject, jobApplicationId: jobApplicationId});
 
         if (result.deletedCount === 0) {
-            // Redundant check, but safe
-            logger.warn(`Stage with ID ${id} not found for deletion in job application ${jobApplicationId}. UserId: ${userId}`);
+            // This should ideally not happen if stageToDelete was found
+            logger.warn(`Stage with ID ${id} was not deleted after initial check. UserId: ${userId}`);
             return res.status(404).json({error: "Not found"});
         }
 
-        // 3. Find the new last stage (sorted by createdAt descending)
+        // --- 3. Find the New Last Stage ---
+        // Find the most recent remaining stage for the job application (sorted by createdAt descending)
         const lastStage = await stagesCollection
-            .find({jobApplicationId})
+            .find({jobApplicationId}) // Only look within the affected job application
             .sort({createdAt: -1})
             .limit(1)
             .toArray();
 
-        const lastStageId = lastStage.length > 0 ? lastStage[0]._id : undefined;
+        const lastStageId = lastStage.length > 0 ? lastStage[0]._id : undefined; // ObjectId or undefined
 
-        // 4. Update job application with the new lastStageId
-        const updatedAt = new Date();
+        // --- 4. Update Job Application ---
+        const updatedAt = lastStage[0].updatedAt;
         await jobApplicationsCollection.updateOne(
             {_id: jobApplicationId},
             {$set: {lastStageId, updatedAt}}
         );
 
-        logger.info(`Successfully deleted stage with ID: ${id} for job application: ${jobApplicationId}. New last stage ID is ${lastStageId}. UserId: ${userId}`);
+        logger.info(`Successfully deleted stage with ID: ${id} for job application: ${jobApplicationId}. New last stage ID is ${lastStageId?.toHexString() || 'none'}. UserId: ${userId}`);
         res.json({
             message: "Deleted successfully",
-            lastStageId: lastStageId?.toHexString()
+            lastStageId: lastStageId?.toHexString() // Use optional chaining for safety
         });
     } catch (err) {
         logger.error(`Error deleting stage with ID ${id}: ${err}. UserId: ${userId}`);
