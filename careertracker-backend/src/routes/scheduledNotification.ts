@@ -2,14 +2,10 @@ import express from 'express';
 import {randomUUID} from 'crypto'
 import {dbClient} from "../config/dbClient";
 import {redisClient} from "../config/redis/redisClient";
+import {fetchUserNotifications, notifKey, notifSetKey} from "../utils/scheduledNotificationUtils";
 
 const ScheduledNotificationRouter = express.Router();
 
-/** ------------------------------
- * Helper functions for Redis keys
- * ----------------------------- */
-const notifKey = (userId: string, notifId: string) => `notif:${userId}:${notifId}`;
-const notifSetKey = (userId: string) => `notifications:${userId}`;
 
 /** ------------------------------
  * Utility: TTL calculation helper
@@ -33,7 +29,7 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
 
     try {
         // --- Fetch from Mongo ---
-        let rule, stage;
+        let rule, stage, jobApplication;
         try {
             rule = await dbClient.notificationRules.getById(workerId, ruleId);
             stage = await dbClient.stages.getById(workerId, stageId);
@@ -41,20 +37,26 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
             console.error('Mongo fetch error:', err);
             return res.status(500).json({error: 'Failed to fetch rule or stage'});
         }
-
         if (!rule || !stage) {
             return res.status(404).json({error: 'Rule or stage not found'});
         }
 
+        jobApplication = await dbClient.jobApplications.getById(workerId, stage.jobApplicationId.toString())
+
+        if (jobApplication?.userId !== rule.userId) {
+            return res.status(500).json({error: "Job's userId and Rule's userId unmatched!"});
+        }
+
         // --- Compose notification ---
         const notificationId = randomUUID();
-        const ttlMs = Math.min(calculateTTL(rule, stage), 100000); // at least 1s
+        const ttlMs = Math.min(calculateTTL(rule, stage), 100000000); // at least 1s
         const ttlSeconds = Math.ceil(ttlMs / 1000);
 
         const notification = {
             id: notificationId,
             userId: rule.userId,
-            message: `Stage "${stage.type}" triggered by rule "${rule.stageField}".`,
+            jobApplicationId: jobApplication._id,
+            message: `In the company ${jobApplication.company} - the stage "${stage.type}" triggered by rule "${rule.stageField}".`,
             isRead: false,
             createdAt: new Date().toISOString(),
             expireAt: Date.now() + ttlMs, // optional: track expiry
@@ -88,43 +90,9 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
  * ----------------------------- */
 ScheduledNotificationRouter.get('/:userId', async (req, res) => {
     const {userId} = req.params;
-    const userSetRedisKey = notifSetKey(userId);
 
     try {
-        const notifKeys = await redisClient.smembers(userSetRedisKey);
-
-        if (!notifKeys.length) {
-            return res.status(200).json([]);
-        }
-
-        // Check which notifications still exist
-        const existsResults = await Promise.all(
-            notifKeys.map((key) => redisClient.exists(key))
-        );
-
-        const validKeys = notifKeys.filter((_, i) => existsResults[i] === 1);
-        const expiredKeys = notifKeys.filter((_, i) => existsResults[i] === 0);
-
-        // Cleanup expired references
-        if (expiredKeys.length > 0) {
-            const cleanupPipeline = redisClient.multi();
-            cleanupPipeline.srem(userSetRedisKey, ...expiredKeys);
-            await cleanupPipeline.exec();
-        }
-
-        // Fetch valid notifications
-        const notifications = await Promise.all(
-            validKeys.map(async (key) => {
-                try {
-                    const data = await redisClient.get(key);
-                    return data ? JSON.parse(data) : null;
-                } catch (err) {
-                    console.warn(`Failed to parse notification ${key}:`, err);
-                    return null;
-                }
-            })
-        );
-
+        const notifications = await fetchUserNotifications(userId);
         res.status(200).json(notifications.filter(Boolean));
     } catch (err) {
         console.error('Error fetching notifications:', err);

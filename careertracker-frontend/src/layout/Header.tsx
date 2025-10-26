@@ -1,13 +1,17 @@
+import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import Badge from '@mui/material/Badge';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import { useUser } from '../context/UserContext';
 
-const Header = () => {
-    const {user} = useUser();
+// Icons
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+
+import {useUser} from '../context/UserContext';
+import NotificationBell from '../components/NotificationBell'
+
+const Header: React.FC = () => {
+    const {user} = useUser(); // Cast for TypeScript safety
+    const maxCount = 99; // Define constants here or pass them down
+
     return (
         <Box
             sx={{
@@ -19,17 +23,19 @@ const Header = () => {
                 marginLeft: '50px',
             }}
         >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccountCircleIcon />
+            {/* --- User Info Section --- */}
+            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                <AccountCircleIcon/>
                 <Typography variant="h6">
                     Hello {user?.name}
                 </Typography>
             </Box>
-            <IconButton color="inherit">
-                <Badge badgeContent={user?.notifications?.length} color="error">
-                    <NotificationsIcon />
-                </Badge>
-            </IconButton>
+
+            {/* --- Notification Bell Component --- */}
+            <NotificationBell
+                userNotifications={user?.notifications}
+                maxCount={maxCount}
+            />
         </Box>
     );
 };

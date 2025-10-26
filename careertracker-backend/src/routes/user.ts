@@ -4,7 +4,8 @@ import logger from '../config/logger';
 import {AuthenticatedRequest} from '../interfaces/authenticatedRequest';
 import {dbClient} from "../config/dbClient";
 import {FilterMiddlewareRequest} from "../middleware/filterMiddleware";
-import {User} from "./index"; // Assuming your user interface is imported here
+import {User} from "./index";
+import {fetchUserNotifications} from "../utils/scheduledNotificationUtils"; // Assuming your user interface is imported here
 
 const userRouter = Router();
 
@@ -34,12 +35,15 @@ userRouter.get('/me', async (req: AuthenticatedRequest, res: Response) => {
             return res.status(404).json({error: 'User profile not found.'});
         }
 
+        const notifications = await fetchUserNotifications(userId);
+
         logger.info(`Successfully retrieved 'me' data for user ID: ${userId}`);
 
         // Filter out sensitive data (like 'password' if it exists on the 'user' object)
         return res.status(200).json({
             _id: user._id,
             username: user.username,
+            notifications: notifications
             // ... include other non-sensitive fields
         });
     } catch (error) {
