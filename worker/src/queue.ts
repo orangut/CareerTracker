@@ -7,15 +7,17 @@ export const stageNotificationQueue = new Queue(DELAYED_NOTIFICATION_QUEUE, {
     connection: bullConnection,
 });
 
+export const delayedNotificationSetKey = (userId: string) => `delayed-notification:user:${userId}`;
+
 
 export async function enqueueNotification(userId: string, notifications: ScheduledNotification[]) {
-    const zsetKey = `notification:user:${userId}`;
+    const zsetKey = delayedNotificationSetKey(userId);
 
     const jobs = await stageNotificationQueue.addBulk(
         notifications.map(notification => ({
             name: 'trigger-notification',
             data: notification,
-            opts: {jobId: uuidv4(), delay: 30000}//Math.max(0, notification.triggerTime - Date.now())},
+            opts: {jobId: uuidv4(), delay: Math.max(0, notification.triggerTime - Date.now())},
         }))
     )
 
@@ -45,7 +47,7 @@ export async function enqueueNotification(userId: string, notifications: Schedul
 
 
 export async function dequeueNotification(userId: string, typeOfTransaction: transactionType, matchValue: string) {
-    const zsetKey = `notification:user:${userId}`
+    const zsetKey = delayedNotificationSetKey(userId);
     const matchKey: keyof NotificationQueue = typeOfTransaction === 'Stage' ? 'stageId' : 'ruleId'
 
     const members = await redisClient.zrange(zsetKey, 0, -1);

@@ -8,6 +8,7 @@ import notificationRuleRouter from "./notificationRule";
 import jobApplicationRouter from "./jobApplication";
 import userRouter from "./user";
 import stageRouter from "./stage";
+import ScheduledNotificationRouter from "./scheduledNotification";
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.use('/user', authenticateToken, userFiltersHandler, userRouter);
 router.use('/job-application', authenticateToken, userIdForeignKeyFiltersHandler, jobApplicationRouter);
 router.use('/notification-rule', authenticateToken, userIdForeignKeyFiltersHandler, notificationRuleRouter);
 router.use('/stage', authenticateToken, userIdForeignKeyFiltersHandler, stageRouter);
+router.use('/scheduled-notification', ScheduledNotificationRouter);
 
 // Error handling middleware to catch and log any unhandled errors
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

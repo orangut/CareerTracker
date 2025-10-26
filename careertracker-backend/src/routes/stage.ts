@@ -6,7 +6,7 @@ import {dbClient} from "../config/dbClient";
 import {FilterMiddlewareRequest} from "../middleware/filterMiddleware";
 
 import {Stage} from "./index"
-import {pushTransaction} from "../config/redisClient";
+import {pushTransaction} from "../config/redis/redisTransactionQueue";
 
 const stageRouter = Router();
 
