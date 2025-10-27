@@ -10,8 +10,8 @@ const StageDetailsCard = (stage: Stage) => {
   const stageFieldsToDisplay = Object.entries(stage).filter(([key, _]) => !key.toLowerCase().includes('id') && !['type', 'notes'].includes(key));
 
   return (
-    <Paper elevation={2} sx={{ p: 3, minWidth: 240 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pt: 2 }}>
+    <Paper elevation={2} sx={{ p: 3, minWidth: '70%' }}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" >
         <Typography variant="h6" gutterBottom sx={{
           textShadow: '1px 2px 8px rgba(0,0,0,0.08)',
           background: 'linear-gradient(90deg, #1976d2 30%, #42a5f5 90%)',
