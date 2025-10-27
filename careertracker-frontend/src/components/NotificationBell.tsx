@@ -18,7 +18,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 // Define the TypeScript Interface for a Notification
-interface Notification {
+export interface Notification {
     id: string | number;
     message: string;
     isRead: boolean;
@@ -28,7 +28,7 @@ interface Notification {
 
 // Define the Props for the NotificationBell component
 interface NotificationBellProps {
-    userNotifications: object[] | undefined;
+    userNotifications: Notification[] | undefined;
     maxCount: number;
 }
 
@@ -38,17 +38,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({userNotifications = 
 
     const navigate = useNavigate();
 
-    const initialNotifications: Notification[] = userNotifications as Notification[];
-
     // Use local state to manage the notification list
     const [localNotifications, setLocalNotifications] = React.useState<Notification[]>(
-        initialNotifications.map(notif => ({...notif, isRead: notif.isRead ?? false}))
+        userNotifications.map(notif => ({...notif, isRead: notif.isRead ?? false}))
     );
-
-    // Sync local state when the props change (i.e., user context updates)
-    React.useEffect(() => {
-        setLocalNotifications(initialNotifications.map(notif => ({...notif, isRead: notif.isRead ?? false})));
-    }, [initialNotifications]);
 
     const unreadNotifications = localNotifications.filter(notif => !notif.isRead);
     const notificationCount = unreadNotifications.length;

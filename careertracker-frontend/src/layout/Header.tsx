@@ -7,6 +7,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 import {useUser} from '../context/UserContext';
 import NotificationBell from '../components/NotificationBell'
+import { type Notification} from '../components/NotificationBell'
 
 const Header: React.FC = () => {
     const {user} = useUser(); // Cast for TypeScript safety
@@ -33,7 +34,7 @@ const Header: React.FC = () => {
 
             {/* --- Notification Bell Component --- */}
             <NotificationBell
-                userNotifications={user?.notifications}
+                userNotifications={user?.notifications as Notification[]}
                 maxCount={maxCount}
             />
         </Box>
