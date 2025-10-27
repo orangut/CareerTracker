@@ -14,6 +14,8 @@ import PrimaryTooltip from '../components/PrimaryTooltip.tsx';
 import StarRaiting from '../components/starRaiting.tsx';
 import { getJobApplicationStages } from '../api/jobApplicationsApi.ts';
 import StageDetailsCard from '../components/StageDetailsCard.tsx';
+import StageFormDialog, { type PartialStage } from '../components/StageFormDialog.tsx';
+import { createStage, updateStage } from '../api/stagesApi.ts';
 
 const ViewApplicationPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,23 +25,34 @@ const ViewApplicationPage = () => {
 
   const [selectedStageIdx, setSelectedStageIdx] = useState(0);
   const [stages, setStages] = useState<Stage[]>([]);
+  const [stageFormOpen, setStageFormOpen] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchStages = async () => {
-      if (id) {
-        try {
-          const data = await getJobApplicationStages(id);
-          if (isMounted) setStages(data.reverse());
-        } catch (error) { }
-      } else {
-        setStages([]);
-      }
-    };
     fetchStages();
-    return () => { isMounted = false; };
   }, [id]);
 
+  const addStage = async (stage: PartialStage) => {
+    await createStage(id!, stage);
+    await fetchStages();
+  }
+
+
+  const editStage = async (editedStage: PartialStage) => {
+    await updateStage(stages[selectedStageIdx]._id!, id!, editedStage);
+    fetchStages();
+  }
+
+
+  const fetchStages = async () => {
+    if (id) {
+      try {
+        const data = await getJobApplicationStages(id);
+        setStages(data.reverse());
+      } catch (error) { }
+    } else {
+      setStages([]);
+    }
+  };
 
   if (!job) {
     return (
@@ -50,6 +63,7 @@ const ViewApplicationPage = () => {
       </Box>
     );
   }
+
 
   return (
     <Box sx={{ display: 'flex', gap: 0, px: 4, py: 2 }}>
@@ -174,9 +188,14 @@ const ViewApplicationPage = () => {
             </Typography>
             <PrimaryTooltip title="Add Stage" >
               <IconButton size="medium" >
-                <AddIcon color='primary' fontSize="medium" onClick={() => { }} />
+                <AddIcon color='primary' fontSize="medium" onClick={() => setStageFormOpen(true)} />
               </IconButton>
             </PrimaryTooltip>
+            <StageFormDialog
+              key={"add-stage"}
+              open={stageFormOpen}
+              onClose={() => setStageFormOpen(false)}
+              onSubmit={(stage) => addStage(stage)} />
           </Stack>
           {stages.length ?
             <List sx={{
@@ -211,7 +230,7 @@ const ViewApplicationPage = () => {
         {/* Stage Details */}
         <Box sx={{ flex: 1, pl: 3, pt: 2, display: 'flex', alignItems: 'start', justifyContent: 'center' }}>
           {stages.length ?
-            StageDetailsCard(stages[selectedStageIdx])
+            <StageDetailsCard stage={stages[selectedStageIdx]} onEditStage={editStage} />
             :
             <></>}
         </Box>

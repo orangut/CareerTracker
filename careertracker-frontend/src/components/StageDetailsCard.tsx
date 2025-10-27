@@ -3,12 +3,20 @@ import EditIcon from '@mui/icons-material/Edit';
 import type { Stage } from "../models/stage";
 import { checkIfDate, formatDate } from "../utils/helperFunctions";
 import PrimaryTooltip from "./PrimaryTooltip";
+import { useState } from "react";
+import StageFormDialog, { type PartialStage } from "./StageFormDialog";
+
+type StageDetailsCardProps = {
+  stage: Stage;
+  onEditStage: (editedStage: PartialStage) => void;
+};
 
 
 
-const StageDetailsCard = (stage: Stage) => {
+const StageDetailsCard = ({ stage, onEditStage }: StageDetailsCardProps) => {
+  const [stageFormEditOpen, setStageFormEditOpen] = useState(false);
   const stageFieldsToDisplay = Object.entries(stage).filter(([key, _]) => !key.toLowerCase().includes('id') && !['type', 'notes'].includes(key));
-
+  
   return (
     <Paper elevation={2} sx={{ p: 3, minWidth: '70%' }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" >
@@ -21,11 +29,17 @@ const StageDetailsCard = (stage: Stage) => {
         }}>
           {stage.type}
         </Typography>
-        <PrimaryTooltip title="Add Stage" >
+        <PrimaryTooltip title="Edit Stage" >
           <IconButton size="medium" >
-            <EditIcon color='primary' fontSize="medium" onClick={() => { }} />
+            <EditIcon color='primary' fontSize="medium" onClick={() => setStageFormEditOpen(true)} />
           </IconButton>
         </PrimaryTooltip>
+        <StageFormDialog
+          key={"edit-stage"}
+          open={stageFormEditOpen}
+          stage={{ type: stage.type, startedAt: stage.startedAt, completedAt: stage.completedAt, notes: stage.notes }}
+          onClose={() => setStageFormEditOpen(false)}
+          onSubmit={(stage) => onEditStage(stage)} />
       </Stack>
       <Divider sx={{ my: 1 }} />
       <Stack spacing={1}>
