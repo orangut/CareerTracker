@@ -55,3 +55,7 @@ export const formatDate = (date: Date | string, withTime: boolean = false): stri
 export const getSalaryString = (salaryMin?: number | undefined, salaryMax?: number | undefined): string => {
     return `${salaryMin !== undefined ? `${salaryMin.toString()}k$` : '?'} - ${salaryMax !== undefined ? `${salaryMax}k$` : '?'}`
 }
+
+export const checkIfDate = (value: any): boolean => {
+    return (value instanceof Date && !isNaN(value.getTime())) || ((typeof value == 'string') && !isNaN(Date.parse(value)));
+}

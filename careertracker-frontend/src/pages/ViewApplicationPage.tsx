@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Stack, Chip, Link, Divider, IconButton, Paper, List } from '@mui/material';
+import { Box, Typography, Stack, Chip, Link, Divider, IconButton, List } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import EditIcon from '@mui/icons-material/Edit';
@@ -13,6 +13,7 @@ import type { Stage } from '../models/stage.ts';
 import PrimaryTooltip from '../components/PrimaryTooltip.tsx';
 import StarRaiting from '../components/starRaiting.tsx';
 import { getJobApplicationStages } from '../api/jobApplicationsApi.ts';
+import StageDetailsCard from '../components/StageDetailsCard.tsx';
 
 const ViewApplicationPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -208,51 +209,10 @@ const ViewApplicationPage = () => {
         </Stack>
 
         {/* Stage Details */}
-        <Box sx={{ flex: 1, pl: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ flex: 1, pl: 3, pt: 2, display: 'flex', alignItems: 'start', justifyContent: 'center' }}>
           {stages.length ?
-            <Paper elevation={2} sx={{ p: 3, minWidth: 240 }}>
-              <Typography variant="h6" gutterBottom>
-                Stage Details
-              </Typography>
-              <Divider sx={{ my: 1 }} />
-              <Stack spacing={1}>
-                <Stack direction="row" spacing={1}>
-                  <Typography variant="body2" color="text.secondary">Type:</Typography>
-                  <Typography variant="body2">{stages[selectedStageIdx].type}</Typography>
-                </Stack>
-                <Stack direction="row" spacing={1}>
-                  <Typography variant="body2" color="text.secondary">Started At:</Typography>
-                  <Typography variant="body2">{stages[selectedStageIdx].startedAt?.toString()}</Typography>
-                </Stack>
-                <Stack direction="row" spacing={1}>
-                  <Typography variant="body2" color="text.secondary">Completed At:</Typography>
-                  <Typography variant="body2">{stages[selectedStageIdx].completedAt?.toString() || '—'}</Typography>
-                </Stack>
-                <Stack direction="row" spacing={1}>
-                  <Typography variant="body2" color="text.secondary">Created At:</Typography>
-                  <Typography variant="body2">{stages[selectedStageIdx].createdAt?.toString()}</Typography>
-                </Stack>
-                <Stack direction="row" spacing={1}>
-                  <Typography variant="body2" color="text.secondary">Updated At:</Typography>
-                  <Typography variant="body2">{stages[selectedStageIdx].updatedAt?.toString()}</Typography>
-                </Stack>
-                <Stack direction="row" spacing={1}>
-                  <Typography variant="body2" color="text.secondary">Job Application ID:</Typography>
-                  <Typography variant="body2">{stages[selectedStageIdx].jobApplicationId}</Typography>
-                </Stack>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">Notes:</Typography>
-                  <Stack spacing={0.5} sx={{ pl: 1 }}>
-                    {stages[selectedStageIdx].notes && stages[selectedStageIdx].notes.length > 0
-                      ? stages[selectedStageIdx].notes.map((note, idx) => (
-                        <Typography key={idx} variant="body2">• {note}</Typography>
-                      ))
-                      : <Typography variant="body2">No notes.</Typography>
-                    }
-                  </Stack>
-                </Box>
-              </Stack>
-            </Paper> :
+            StageDetailsCard(stages[selectedStageIdx])
+            :
             <></>}
         </Box>
       </Box>
