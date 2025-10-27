@@ -6,11 +6,12 @@ import {dbClient} from "../config/dbClient";
 import {FilterMiddlewareRequest} from "../middleware/filterMiddleware";
 
 import {Stage} from "./index"
+import {pushTransaction} from "../config/redis/redisTransactionQueue";
 
 const stageRouter = Router();
 
-// Route to get all stages by userId and filters
-stageRouter.get('/', async (req: FilterMiddlewareRequest<Stage>, res: Response) => {
+// Route to get all last stages by userId and filters
+stageRouter.get('/last-stages', async (req: FilterMiddlewareRequest<Stage>, res: Response) => {
     try {
         const {userId, filters} = req;
 
@@ -21,7 +22,7 @@ stageRouter.get('/', async (req: FilterMiddlewareRequest<Stage>, res: Response) 
 
         logger.info(`Fetching all stages for user: ${userId} with filters: ${JSON.stringify(filters)}`);
         // Assuming dbClient.stages.getAll is the correct method
-        const stages = await dbClient.stages.getAllLastStages(userId, filters);
+        const stages = await dbClient.stages.getLastStages(userId, filters);
 
         if (!stages || stages.length === 0) {
             logger.info(`No stages found for user: ${userId} with provided filters.`);
@@ -78,10 +79,12 @@ stageRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
         logger.info(`Attempting to create a new stage for user: ${userId}`);
         const newStage = await dbClient.stages.create(userId, req.body);
 
-        if (!newStage) {
+        if (!newStage?._id) {
             logger.error(`Failed to create stage for user: ${userId}`);
             return res.status(500).send('Failed to create stage.');
         }
+
+        await pushTransaction('Stage', 'CREATE', userId.toString(), newStage._id.toString());
 
         logger.info(`Successfully created new stage with ID: ${newStage._id} for user: ${userId}`);
         return res.status(201).json(newStage);
@@ -106,10 +109,14 @@ stageRouter.put('/:stageId', async (req: FilterMiddlewareRequest<Stage>, res: Re
         logger.info(`Attempting to update stage with ID: ${stageId} for user: ${userId}`);
         const updated = await dbClient.stages.update(userId, stageId, req.body, filters);
 
-        if (!updated) {
+        if (!updated?._id) {
             logger.warn(`Update failed: Stage with ID: ${stageId} not found or update failed for user: ${userId}`);
             return res.status(404).json({error: 'Stage not found or update failed.'});
         }
+
+        await pushTransaction('Stage', 'DELETE', userId.toString(), stageId);
+        await pushTransaction('Stage', 'CREATE', userId.toString(), updated._id.toString());
+
 
         logger.info(`Successfully updated stage with ID: ${stageId} for user: ${userId}`);
         return res.status(200).json(updated);
@@ -138,6 +145,8 @@ stageRouter.delete('/:stageId', async (req: FilterMiddlewareRequest<Stage>, res:
             logger.warn(`Deletion failed: Stage with ID: ${stageId} not found or delete failed for user: ${userId}`);
             return res.status(404).json({error: 'Stage not found or delete failed.'});
         }
+
+        await pushTransaction('Stage', 'DELETE', userId.toString(), stageId);
 
         logger.info(`Successfully deleted stage with ID: ${stageId} for user: ${userId}`);
         return res.status(200).json({message: 'Stage deleted successfully.'});

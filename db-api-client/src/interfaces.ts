@@ -21,7 +21,17 @@ export interface IsLoginSuccess {
 /**
  * Filters must only contain keys that exist on the generic type F.
  */
-export type Filters<F> = Partial<F>;
+type ObjectId = any; // Example: if your types use 'mongoose.Types.ObjectId'
+
+/**
+ * Maps over the properties of F, converting any property
+ * whose type is ObjectId to string. The result is Partial.
+ */
+export type Filters<F> = Partial<{
+    [K in keyof F]: F[K] extends ObjectId
+        ? string // If the property is ObjectId, make it a string
+        : F[K];   // Otherwise, keep the original type
+}>;
 
 /**
  * Wrapper for all requests sent to the Mongo API service.

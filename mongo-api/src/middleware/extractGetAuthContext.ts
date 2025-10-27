@@ -2,6 +2,7 @@ import {NextFunction, Response} from 'express';
 import {MyRequestType} from "../types";
 import {Filter, ObjectId} from "mongodb";
 import {convertStringIdsToObjectId} from "../utils";
+import logger from "../config/logger";
 
 
 export const extractAuthContext = <F>(req: MyRequestType<F>, res: Response, next: NextFunction) => {
@@ -16,7 +17,7 @@ export const extractAuthContext = <F>(req: MyRequestType<F>, res: Response, next
             filters = JSON.parse(req.query.filters as string) as Filter<F>;
 
         } catch (error) {
-            console.error('Failed to parse filters from query string:', error);
+            logger.error('Failed to parse filters from query string:', error);
             return res.status(400).json({
                 message: 'Invalid filters format. Filters must be a valid JSON string.'
             });
@@ -32,7 +33,7 @@ export const extractAuthContext = <F>(req: MyRequestType<F>, res: Response, next
 
     if (!userId || typeof userId !== "string" || !ObjectId.isValid(userId)) {
         // userId is mandatory for all your functions
-        console.error('Invalid userId format');
+        logger.error(`Invalid userId format. UserId: ${userId}`);
 
         return res.status(401).json({
             message: 'Authentication context (userId) is missing or invalid in query parameters.'

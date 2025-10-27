@@ -6,7 +6,7 @@ import {fetchCurrentUser} from "../api/userApi.ts";
 export interface User {
     id: string;
     name: string;
-    notifications?: string[];
+    notifications?: object[];
 }
 
 interface UserContextType {
@@ -26,7 +26,7 @@ export const UserProvider = ({children}: { children: ReactNode }) => {
         const fetchUser = async () => {
             try {
                 const res = await fetchCurrentUser();
-                setUser({id: res._id, name: res.username});
+                setUser({id: res._id, name: res.username, notifications: res.notifications});
             } catch (error) {
                 // If the cookie is expired or invalid, the request will fail
                 setUser(null);

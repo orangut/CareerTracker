@@ -103,7 +103,7 @@ const dbApiClient = (db_api_url: string, logger: Logger) => {
             ),
         },
         stages: {
-            getAllLastStages: async (callingUserId: string, filters: Filters<Stage> = {}): Promise<Stage[] | null> => handleApiRequest(
+            getLastStages: async (callingUserId: string, filters: Filters<Stage> = {}): Promise<Stage[] | null> => handleApiRequest(
                 getAllLastStages(apiClient, logger)(callingUserId, filters)
             ),
             getById: async (callingUserId: string, stageId: string, filters: Filters<Stage> = {}): Promise<Stage | null> => handleApiRequest(

@@ -24,7 +24,7 @@ app.use("/notification-rules", notificationsRulesRouter);
 const PORT = process.env.PORT || 4000;
 
 connectMongo().then(() => {
-    app.listen(PORT, () => console.log(`Mongo API running on port ${PORT}`));
+    app.listen(PORT, () => logger.info(`Mongo API running on port ${PORT}`));
 });
 
 // --- Swagger/OpenAPI configuration ---

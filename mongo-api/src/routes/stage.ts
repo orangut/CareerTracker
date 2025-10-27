@@ -81,6 +81,21 @@ stageRouter.post('/', async (req: CreateStageReq, res: Response) => {
             return res.status(400).json({error: parseResult.error});
         }
 
+        const userIdObject = new ObjectId(userId)
+        const jobApplicationId = parseResult.data.jobApplicationId;
+
+        // VERIFY JOB APPLICATION EXISTENCE AND OWNERSHIP ---
+        const jobAppOwner = await jobApplicationsCollection.findOne(
+            { _id: jobApplicationId, userId: userIdObject },
+            { projection: { _id: 1 } } // Optimize by fetching only the _id
+        );
+
+        if (!jobAppOwner) {
+            logger.warn(`Job application ID ${jobApplicationId} not found or unauthorized for stage creation. UserId: ${userId}`);
+            // Return 404 (Not Found) or 403 (Forbidden) depending on policy
+            return res.status(404).json({ error: "Job application not found or unauthorized." });
+        }
+
         const now = new Date()
 
         // Prepare data for insertion, ensuring the required server-side fields are added
@@ -96,8 +111,6 @@ stageRouter.post('/', async (req: CreateStageReq, res: Response) => {
             _id: result.insertedId,
             ...stageData,
         };
-
-        const jobApplicationId = newStage.jobApplicationId
 
         // Update JobApplication
         await jobApplicationsCollection.updateOne({_id: jobApplicationId}, {

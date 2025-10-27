@@ -2,7 +2,7 @@ import {z} from "zod";
 import {ObjectId} from "mongodb";
 
 import {client} from "../config/mongoClient";
-import {StageType, StatesOptions} from "./stage";
+import {Stage, StageType, StatesOptions} from "./stage";
 
 
 const MAX_OFFSET_MS = 4 * 7 * 24 * 60 * 60 * 1000; // 4 weeks
@@ -14,6 +14,7 @@ export interface NotificationRule {
     userId: ObjectId;           // Reference to the user
     offsetMs: number;         // Offset in milliseconds (positive or negative)
     stageType: StageType
+    stageField: keyof Stage;
     createdAt: Date;          // Rule creation timestamp
     updatedAt: Date;          // Last update timestamp
 }
@@ -30,6 +31,8 @@ export const NotificationRuleSchema = z.object({
             message: "offsetMs must be in increments of 30 minutes"
         }),
     stageType: z.enum(StatesOptions),
+    // TODO: verify stageField is a valid and date field of the stageType collection
+    stageField: z.string().min(1, "stageField cannot be empty.") as z.ZodType<keyof Stage>,
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
 });
@@ -38,6 +41,7 @@ export const NotificationRuleCreateSchema = NotificationRuleSchema.pick({
     userId: true,
     offsetMs: true,
     stageType: true,
+    stageField: true,
 })
 export const NotificationRuleUpdateSchema = NotificationRuleCreateSchema.partial()
 
