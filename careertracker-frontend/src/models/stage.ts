@@ -21,3 +21,18 @@ export type Stage = {
     createdAt: Date | string;
     updatedAt: Date | string;
 }
+
+export type StageKeys = keyof Stage;
+
+export function getStageFieldType<K extends StageKeys>(key: K): string {
+    return {
+        "_id": "string",
+        "jobApplicationId": "string",
+        "type": "StageType",
+        "startedAt": "Date",
+        "completedAt": "Date",
+        "createdAt": "Date",
+        "updatedAt": "Date",
+        "notes": "string[]"
+    }[key];
+}
