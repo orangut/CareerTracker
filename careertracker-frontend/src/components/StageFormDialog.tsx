@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, Dialog, DialogTitle, Typography, DialogContent, InputAdornment, IconButton, Stack } from '@mui/material';
-import { type Stage } from '../models/stage';
+import { Box, TextField, Button, Dialog, DialogTitle, Typography, DialogContent, InputAdornment, IconButton, Stack, Select, MenuItem, type SelectChangeEvent, FormControl, InputLabel } from '@mui/material';
+import { StatesOptions, type Stage, type StageType } from '../models/stage';
 import { Trash2 } from 'lucide-react';
 import PrimaryTooltip from './PrimaryTooltip';
 import AddIcon from '@mui/icons-material/Add';
+import { snakeToRegularCase } from '../utils/helperFunctions';
 
 export type PartialStage = Pick<Stage, 'type' | 'startedAt' | 'completedAt' | 'notes'>;
 
@@ -40,7 +41,7 @@ const StageFormDialog: React.FC<StageFormDialogProps> = ({ open, onClose, stage,
         // when dialog closes, we defer full reset until exit transition via TransitionProps.onExited
     }, [open, stage]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index?: number) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<StageType>, index?: number) => {
         const { name, value } = e.target;
         if (name === 'notes' && index !== undefined) {
             const updatedNotes = [...(formState.notes ?? [])];
@@ -89,15 +90,22 @@ const StageFormDialog: React.FC<StageFormDialogProps> = ({ open, onClose, stage,
                 </Typography>
             </DialogTitle>
             <DialogContent>
-                <form onSubmit={handleSubmit}>
-                    <TextField
+                <FormControl sx={{ m: 1, width: 300 }} component={"form"} onSubmit={handleSubmit}>
+                    <InputLabel id="type-select-label">Type</InputLabel>
+                    <Select
+                        labelId="type-select-label"
+                        id="type-select"
                         label="Type"
                         name="type"
-                        value={formState.type}
-                        onChange={handleChange}
+                        value={formState.type as StageType}
+                        onChange={handleChange as (event: SelectChangeEvent<StageType>) => void}
                         fullWidth
-                        sx={{ mb: 2, mt: 2 }}
-                    />
+                        sx={{ mb: 2 }}
+                    >
+                        {StatesOptions.map((state) => (
+                            <MenuItem key={state} value={state}>{snakeToRegularCase(state)}</MenuItem>
+                        ))}
+                    </Select>
                     <TextField
                         label="Started At"
                         type="date"
@@ -147,7 +155,7 @@ const StageFormDialog: React.FC<StageFormDialogProps> = ({ open, onClose, stage,
                     <Box display="flex" justifyContent="center" mt={2}>
                         <Button type="submit" variant="contained">Submit</Button>
                     </Box>
-                </form>
+                </FormControl>
             </DialogContent>
         </Dialog >
     );

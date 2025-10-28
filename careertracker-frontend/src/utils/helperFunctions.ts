@@ -59,3 +59,11 @@ export const getSalaryString = (salaryMin?: number | undefined, salaryMax?: numb
 export const checkIfDate = (value: any): boolean => {
     return (value instanceof Date && !isNaN(value.getTime())) || ((typeof value == 'string') && !isNaN(Date.parse(value)));
 }
+
+export const snakeToRegularCase = (s: string): string => {
+    if (!s) return "";
+    return s
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+}

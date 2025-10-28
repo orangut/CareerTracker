@@ -28,31 +28,30 @@ const ViewApplicationPage = () => {
   const [stageFormOpen, setStageFormOpen] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    const fetchStages = async () => {
+      if (id) {
+        try {
+          const data = await getJobApplicationStages(id);
+          if (isMounted) setStages(data.reverse());
+        } catch (error) { }
+      } else {
+        setStages([]);
+      }
+    };
     fetchStages();
+    return () => { isMounted = false; };
   }, [id]);
 
   const addStage = async (stage: PartialStage) => {
-    await createStage(id!, stage);
-    await fetchStages();
+    const newStage = await createStage(id!, stage);
+    setStages([newStage, ...stages]);
   }
-
 
   const editStage = async (editedStage: PartialStage) => {
-    await updateStage(stages[selectedStageIdx]._id!, id!, editedStage);
-    fetchStages();
+    const epdatedStage = await updateStage(stages[selectedStageIdx]._id!, id!, editedStage);
+    setStages(stages.map((stage, idx) => idx === selectedStageIdx ? epdatedStage : stage));
   }
-
-
-  const fetchStages = async () => {
-    if (id) {
-      try {
-        const data = await getJobApplicationStages(id);
-        setStages(data.reverse());
-      } catch (error) { }
-    } else {
-      setStages([]);
-    }
-  };
 
   if (!job) {
     return (
@@ -187,8 +186,8 @@ const ViewApplicationPage = () => {
               TIMELINE
             </Typography>
             <PrimaryTooltip title="Add Stage" >
-              <IconButton size="medium" >
-                <AddIcon color='primary' fontSize="medium" onClick={() => setStageFormOpen(true)} />
+              <IconButton size="medium" onClick={() => setStageFormOpen(true)}>
+                <AddIcon color='primary' fontSize="medium" />
               </IconButton>
             </PrimaryTooltip>
             <StageFormDialog

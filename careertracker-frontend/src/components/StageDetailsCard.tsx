@@ -16,7 +16,7 @@ type StageDetailsCardProps = {
 const StageDetailsCard = ({ stage, onEditStage }: StageDetailsCardProps) => {
   const [stageFormEditOpen, setStageFormEditOpen] = useState(false);
   const stageFieldsToDisplay = Object.entries(stage).filter(([key, _]) => !key.toLowerCase().includes('id') && !['type', 'notes'].includes(key));
-  
+
   return (
     <Paper elevation={2} sx={{ p: 3, minWidth: '70%' }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" >
@@ -30,8 +30,8 @@ const StageDetailsCard = ({ stage, onEditStage }: StageDetailsCardProps) => {
           {stage.type}
         </Typography>
         <PrimaryTooltip title="Edit Stage" >
-          <IconButton size="medium" >
-            <EditIcon color='primary' fontSize="medium" onClick={() => setStageFormEditOpen(true)} />
+          <IconButton size="medium" onClick={() => setStageFormEditOpen(true)}>
+            <EditIcon color='primary' fontSize="medium" />
           </IconButton>
         </PrimaryTooltip>
         <StageFormDialog
