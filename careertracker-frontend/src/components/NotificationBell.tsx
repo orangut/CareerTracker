@@ -109,6 +109,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({userNotifications = 
                     aria-controls={open ? 'notification-menu' : undefined}
                     aria-haspopup="true"
                     onClick={handleMenuOpen}
+                    edge="end"
                 >
                     <Badge
                         badgeContent={notificationCount}

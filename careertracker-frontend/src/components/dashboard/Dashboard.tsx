@@ -16,7 +16,7 @@ const Dashboard = () => {
     const [filteredJobs, setFilteredJobs] = React.useState<JobApplication[]>(jobApplications);
 
     return (
-        <Box sx={{py: 4, minHeight: '100vh', bgcolor: 'background.default'}}>
+        <Box sx={{pb: 4, minHeight: '100vh', bgcolor: 'background.default'}}>
             <Container maxWidth={false} sx={{py: 4}}>
                 <Box
                     sx={{
