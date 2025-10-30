@@ -3,6 +3,7 @@ import {randomUUID} from 'crypto'
 import {dbClient} from "../config/dbClient";
 import {redisClient} from "../config/redis/redisClient";
 import {fetchUserNotifications, notifKey, notifSetKey} from "../utils/scheduledNotificationUtils";
+import WebSocketServerManager from '../webSocket/server';
 
 const ScheduledNotificationRouter = express.Router();
 
@@ -61,6 +62,8 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
             createdAt: new Date().toISOString(),
             expireAt: Date.now() + ttlMs, // optional: track expiry
         };
+
+        WebSocketServerManager.sendNotification(rule.userId.toString(), notification.message);
 
         const notifRedisKey = notifKey(rule.userId.toString(), notificationId);
         const userSetRedisKey = notifSetKey(rule.userId.toString());

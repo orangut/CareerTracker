@@ -18,6 +18,9 @@ import logger from './config/logger';
 // Import cookie middleware
 import cookieParser from 'cookie-parser';
 
+// Import WebSocket server attachment function
+import { attachWebSocketServer } from './webSocket/server';
+
 
 dotenv.config();
 
@@ -63,9 +66,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', apiRouter);
 
 try {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         logger.info(`Server is running on port ${PORT}`);
     });
+    attachWebSocketServer(server);
 } catch (error) {
     logger.error('Failed to start server:', error);
 }
