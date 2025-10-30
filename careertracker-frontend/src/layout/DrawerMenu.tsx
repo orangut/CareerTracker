@@ -1,12 +1,10 @@
 import { Link } from 'react-router-dom';
 import Drawer from '@mui/material/Drawer';
-import Button from '@mui/material/Button';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import MenuIcon from '@mui/icons-material/Menu';
 import type { SvgIconComponent } from '@mui/icons-material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -30,10 +28,6 @@ const DrawerMenu: React.FC<DrawerMenuProps> = ({ open, onToggle, drawerWidth }) 
   );
 
   return (
-    // <div>
-    /* <Button onClick={() => onToggle(true)} sx={{ position: 'fixed', top: 25, left: 16, zIndex: 1200 }}>
-      <MenuIcon />
-    </Button> */
     <Drawer
       anchor="left"
       open={open}
@@ -46,7 +40,6 @@ const DrawerMenu: React.FC<DrawerMenuProps> = ({ open, onToggle, drawerWidth }) 
     >
       {menuItems}
     </Drawer>
-    // </div>
   );
 };
 

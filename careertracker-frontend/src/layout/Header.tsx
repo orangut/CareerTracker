@@ -6,12 +6,15 @@ import { useUser } from '../context/UserContext';
 import NotificationBell from '../components/NotificationBell'
 import { type Notification } from '../components/NotificationBell'
 import { AppBar, IconButton, Toolbar } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 
 interface HeaderProps {
     drawerToggle?: () => void;
+    open: boolean;
+    drawerWidth: number;
 }
 
-const Header: React.FC<HeaderProps> = ({ drawerToggle }) => {
+const Header: React.FC<HeaderProps> = ({ drawerToggle, open, drawerWidth }) => {
     const { user } = useUser(); // Cast for TypeScript safety
     const maxCount = 99; // Define constants here or pass them down
 
@@ -19,17 +22,18 @@ const Header: React.FC<HeaderProps> = ({ drawerToggle }) => {
         <AppBar
             sx={{
                 display: 'flex',
-                // justifyContent: 'space-between',
-                // alignItems: 'center',
                 mb: 23,
-                // backgroundColor: 'transparent',
-                // marginLeft: '50px',
             }}
         >
             {/* --- User Info Section --- */}
-            <Toolbar sx={{ display: 'flex', alignItems: 'center' }}>
+            <Toolbar sx={{
+                display: 'flex', alignItems: 'center',
+                transition: 'margin-left .3s',
+                marginLeft: open ? `${drawerWidth - 50}px` : 0,
+
+            }}>
                 <IconButton color="inherit" edge="start" onClick={drawerToggle} sx={{ mr: 2 }}>
-                    <AccountCircleIcon />
+                    <MenuIcon />
                 </IconButton>
                 <Typography variant="h6">
                     Hello {user?.name}
@@ -40,6 +44,9 @@ const Header: React.FC<HeaderProps> = ({ drawerToggle }) => {
                     userNotifications={user?.notifications as Notification[]}
                     maxCount={maxCount}
                 />
+                <IconButton color="inherit" edge="end" sx={{ ml: 2 }}>
+                    <AccountCircleIcon />
+                </IconButton>
             </Toolbar>
         </AppBar>
     );

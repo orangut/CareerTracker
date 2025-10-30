@@ -14,12 +14,12 @@ export default function Layout() {
     }
     return (
         <Box sx={{ display: 'flex' }}>
-            <Header drawerToggle={onToggle} />
+            <Header drawerToggle={onToggle} open={open} drawerWidth={drawerWidth} />
             <DrawerMenu open={open} onToggle={onToggle} drawerWidth={drawerWidth} />
             <Box
                 component="main"
                 sx={{
-                    flexGrow: 1, p: 1, mt: 4,
+                    flexGrow: 1, p: 1, mt: 8,
                     transition: 'margin-left .3s',
                     marginLeft: open ? `${drawerWidth}px` : 0,
                 }}
