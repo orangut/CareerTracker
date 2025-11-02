@@ -4,6 +4,7 @@ import {dbClient} from "../config/dbClient";
 import {redisClient} from "../config/redis/redisClient";
 import {fetchUserNotifications, notifKey, notifSetKey} from "../utils/scheduledNotificationUtils";
 import WebSocketServerManager from '../webSocket/server';
+import logger from '../config/logger';
 
 const ScheduledNotificationRouter = express.Router();
 
@@ -35,7 +36,7 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
             rule = await dbClient.notificationRules.getById(workerId, ruleId);
             stage = await dbClient.stages.getById(workerId, stageId);
         } catch (err) {
-            console.error('Mongo fetch error:', err);
+            logger.error('Mongo fetch error:', err);
             return res.status(500).json({error: 'Failed to fetch rule or stage'});
         }
         if (!rule || !stage) {
@@ -82,7 +83,7 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
             expiresIn: ttlSeconds,
         });
     } catch (err) {
-        console.error('Error creating notification:', err);
+        logger.error('Error creating notification:', err);
         res.status(500).json({error: 'Internal server error'});
     }
 });
@@ -98,7 +99,7 @@ ScheduledNotificationRouter.get('/:userId', async (req, res) => {
         const notifications = await fetchUserNotifications(userId);
         res.status(200).json(notifications.filter(Boolean));
     } catch (err) {
-        console.error('Error fetching notifications:', err);
+        logger.error('Error fetching notifications:', err);
         res.status(500).json({error: 'Failed to fetch notifications'});
     }
 });

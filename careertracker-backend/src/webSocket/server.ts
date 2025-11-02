@@ -30,7 +30,6 @@ class WebSocketServerManager {
         this.wss = new WebSocketServer({ noServer: true });
 
         const verifyTokenFromCookie = (cookieHeader?: string): string | null => {
-            console.log("Verifying token from cookie:", cookieHeader);
             if (!cookieHeader) { return null; }
             const cookies = cookie.parse(cookieHeader);
             const token = cookies.token;
@@ -49,7 +48,7 @@ class WebSocketServerManager {
         server.on("upgrade", (request, socket, head) => {
             const userId = verifyTokenFromCookie(request.headers.cookie);
             if (!userId) {
-                console.log("WebSocket connection rejected due to invalid token.");
+                logger.warn("WebSocket connection rejected due to invalid token.");
                 socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
                 socket.destroy();
                 return;
@@ -78,26 +77,18 @@ class WebSocketServerManager {
         return { sendNotification: this.sendNotification.bind(this), wss: this.wss };
     }
 
-    sendNotification(userId: string, message: string) {
-        console.log(JSON.stringify(this.userSockets.keys()));
-        console.log(`Sending notification to userId: ${userId} - Message: ${message}`);
+    sendNotification(userId: string, message: any) {
         const socket = this.userSockets.get(userId);
         if (socket && socket.readyState === WebSocket.OPEN) {
             try {
                 socket.send(JSON.stringify({ type: "notification", message }));
-                console.log(`Notification sent to userId: ${userId}`);
+                logger.info(`Sending notification to userId: ${userId}`);
             } catch {
-                // ignore send errors, cleanup will run on error/close events
-                console.log(`Failed to send notification to userId: ${userId}`);
+                logger.error(`Failed to send notification to userId: ${userId}`);
             }
         }
-
-        //debug code
         else {
-            if (socket) {
-                console.log(`WebSocket found but not open for userId: ${userId}, readyState: ${socket.readyState}`);
-            }
-            console.log(`No open WebSocket for userId: ${userId}`);
+            logger.warn(`No open WebSocket for userId: ${userId}, socket ${socket ? 'closed' : 'not found'}`); 
         }
     }
 

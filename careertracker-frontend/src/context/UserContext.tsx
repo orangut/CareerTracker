@@ -1,6 +1,7 @@
-import {createContext, type ReactNode, useContext, useEffect, useState} from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 
-import {fetchCurrentUser} from "../api/userApi.ts";
+import { fetchCurrentUser } from "../api/userApi.ts";
+import { connectSocket } from '../webSocket/socket.ts';
 
 
 export interface User {
@@ -17,7 +18,7 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider = ({children}: { children: ReactNode }) => {
+export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -26,7 +27,7 @@ export const UserProvider = ({children}: { children: ReactNode }) => {
         const fetchUser = async () => {
             try {
                 const res = await fetchCurrentUser();
-                setUser({id: res._id, name: res.username, notifications: res.notifications});
+                setUser({ id: res._id, name: res.username, notifications: res.notifications });
             } catch (error) {
                 // If the cookie is expired or invalid, the request will fail
                 setUser(null);
@@ -37,7 +38,24 @@ export const UserProvider = ({children}: { children: ReactNode }) => {
         fetchUser();
     }, []);
 
-    const value = {user, setUser, loading};
+    useEffect(() => {
+        if (!user) return;
+        connectSocket({
+            onNotification: (notification: object) => {
+                addNotification(notification);
+            }
+        });
+    }, [user]);
+
+    const addNotification = (notification: object) => {
+        setUser((prevUser) => {
+            return {
+                ...prevUser!,
+                notifications: prevUser ? [notification, ...(prevUser.notifications || [])] : [notification],
+            }
+        });
+    };
+    const value = { user, setUser, loading };
 
     if (loading) {
         return <div>Loading...</div>; // Or a loading spinner
