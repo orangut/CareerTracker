@@ -5,7 +5,7 @@ import Dashboard from '../components/dashboard/Dashboard';
 import AddApplicationPage from '../pages/AddApplicationPage';
 import EditApplicationPage from '../pages/EditApplicationPage';
 import ViewApplicationPage from '../pages/ViewApplicationPage';
-import NotificationPage from '../pages/NotificationPage';
+import NotificationRulePage from '../pages/NotificationRulePage.tsx';
 import Layout from '../layout/Layout.tsx';
 import LoginPage from '../pages/LoginPage.tsx';
 import ProtectedRoute from './ProtectedRoutes.tsx';
@@ -19,7 +19,7 @@ export default function AppRoutes() {
                 <Route path="/add" element={<AddApplicationPage />} />
                 <Route path="/edit/:id" element={<EditApplicationPage />} />
                 <Route path="/view/:id" element={<ViewApplicationPage />} />
-                <Route path="/notifaction" element={<NotificationPage />} />
+                <Route path="/notifaction" element={<NotificationRulePage />} />
             </Route>
         </Route>
     </Routes>
