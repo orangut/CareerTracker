@@ -15,7 +15,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ drawerToggle, open, drawerWidth }) => {
     const { user, connected } = useUser();
-    const maxCount = 99; 
+    const maxCount = 99;
 
     return (
         <AppBar
@@ -58,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ drawerToggle, open, drawerWidth }) => {
                         },
                     }}
                 >
-                    <IconButton color="inherit" edge="end" sx={{ ml: 2 }}>
+                    <IconButton color="inherit" edge="end" >
                         <AccountCircleIcon />
                     </IconButton>
                 </Badge>
