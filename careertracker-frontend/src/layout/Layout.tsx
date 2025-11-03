@@ -10,7 +10,6 @@ export default function Layout() {
 
     const onToggle = () => {
         setOpen(!open);
-        console.log("Toggled drawer to: ", !open);
     }
     return (
         <Box sx={{ display: 'flex' }}>
