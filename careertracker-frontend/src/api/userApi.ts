@@ -1,9 +1,11 @@
 import axiosClient from './axiosClient';
+import { type Notification } from '../models/notification.ts';
+
 
 interface UserData {
     _id: string;
     username: string;
-    notifications: object[];
+    notifications: Notification[];
 }
 
 const BASE_URL = "/user"

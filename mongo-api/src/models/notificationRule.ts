@@ -11,15 +11,19 @@ const db = client.db("career-tracker");
 
 export interface NotificationRule {
     _id?: ObjectId;             // MongoDB ObjectId
+    name: string;
     userId: ObjectId;           // Reference to the user
     offsetMs: number;         // Offset in milliseconds (positive or negative)
     stageType: StageType
     stageField: keyof Stage;
+    messageTemplate: string;
+    isEnabled: boolean;
     createdAt: Date;          // Rule creation timestamp
     updatedAt: Date;          // Last update timestamp
 }
 
 export const NotificationRuleSchema = z.object({
+    name: z.string().min(4, "Name is required at least 4 characters long"),
     userId: z.string().refine((val) => ObjectId.isValid(val), {
         message: "Invalid userId format"
     }).transform((id) => new ObjectId(id)),
@@ -33,15 +37,20 @@ export const NotificationRuleSchema = z.object({
     stageType: z.enum(StatesOptions),
     // TODO: verify stageField is a valid and date field of the stageType collection
     stageField: z.string().min(1, "stageField cannot be empty.") as z.ZodType<keyof Stage>,
+    messageTemplate: z.string().min(1, "messageTemplate must be a string.") as z.ZodType<string>,
+    isEnabled: z.boolean().default(true),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
 });
 
 export const NotificationRuleCreateSchema = NotificationRuleSchema.pick({
+    name: true,
     userId: true,
     offsetMs: true,
     stageType: true,
     stageField: true,
+    messageTemplate: true,
+    isEnabled: true
 })
 export const NotificationRuleUpdateSchema = NotificationRuleCreateSchema.partial()
 

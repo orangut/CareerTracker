@@ -52,7 +52,6 @@ const LoginPage = () => {
             await authFunc(username, password)
             const res = await fetchCurrentUser();
             setUser({ id: res._id, name: res.username });
-
         } catch (error: unknown) {
             if (isAxiosError(error)) {
                 setErrorMsg(error.response?.data?.error);
