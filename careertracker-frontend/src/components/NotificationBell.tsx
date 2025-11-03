@@ -14,7 +14,6 @@ import { useUser } from '../context/UserContext';
 import { useEffect } from 'react';
 import { type Notification } from '../models/notification.ts';
 import NotificationMenuItem from './NotificationMenuItem.tsx';
-import { deleteNotification, toggleNotificationReadStatus } from '../api/notificationsApi.ts';
 
 
 // Define the Props for the NotificationBell component
@@ -28,7 +27,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
     // we only work with the notification array provided via props.
 
     const navigate = useNavigate();
-    const { user, removeNotification } = useUser()
+    const { user, toggleNotificationReadStatus } = useUser()
     // Use local state to manage the notification list
     const [localNotifications, setLocalNotifications] = React.useState<Notification[]>([]);
 
@@ -52,23 +51,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
         setAnchorEl(null);
     };
 
-    const handleToggleReadStatus = async (notificationId: string | number) => {
-        setLocalNotifications(prevNotifs =>
-            prevNotifs.map(notif =>
-                notif.id === notificationId ? { ...notif, isRead: !notif.isRead } : notif
-            )
-        );
-        toggleNotificationReadStatus(notificationId.toString(), localNotifications.find(notif => notif.id === notificationId)?.isRead ? false : true);
-    };
-
-    const handleDeleteNotification = async (notificationId: string | number) => {
-        setLocalNotifications(prevNotifs =>
-            prevNotifs.filter(notif => notif.id !== notificationId)
-        );
-        removeNotification(notificationId.toString());
-        deleteNotification(notificationId.toString());
-    };
-
     const handleNavigateToApplication = async (
         notification: Notification
     ) => {
@@ -80,7 +62,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
 
         // Mark as read when navigating
         if (!notification.isRead) {
-            await handleToggleReadStatus(notification.id);
+            toggleNotificationReadStatus(notification.id.toString());
         }
         navigate(path);
     };
@@ -133,9 +115,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
                             <NotificationMenuItem
                                 key={`notif menue item ${notif.id}`}
                                 notification={notif}
-                                onNavigate={handleNavigateToApplication}
-                                onToggleRead={handleToggleReadStatus}
-                                onDelete={handleDeleteNotification} />
+                                onNavigate={handleNavigateToApplication} />
                         )),
                         < Divider key={"secondDivider"} sx={{ my: 0.5 }} />,
                         <MenuItem key={"footer"} onClick={handleMenuClose}>

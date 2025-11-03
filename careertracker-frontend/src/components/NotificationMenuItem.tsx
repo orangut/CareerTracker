@@ -4,20 +4,18 @@ import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import MarkEmailUnreadIcon from '@mui/icons-material/MarkEmailUnread';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { type Notification } from '../models/notification.ts';
+import { useUser } from "../context/UserContext.tsx";
 
 interface NotificationMenuItemProps {
     notification: Notification;
     onNavigate: (notification: Notification) => Promise<void>;
-    onToggleRead: (id: string | number) => Promise<void>;
-    onDelete: (id: string | number) => Promise<void>;
 }
 
 const NotificationMenuItem: React.FC<NotificationMenuItemProps> = ({
     notification: notif,
     onNavigate,
-    onToggleRead,
-    onDelete
 }) => {
+    const { removeNotification, toggleNotificationReadStatus } = useUser()
     return (
         <MenuItem
             disableRipple
@@ -64,10 +62,10 @@ const NotificationMenuItem: React.FC<NotificationMenuItemProps> = ({
                 <Tooltip title={notif.isRead ? "Mark as unread" : "Mark as read"}>
                     <IconButton
                         size="small"
-                        onClick={async (e) => {
+                        onClick={(e) => {
                             e.stopPropagation();
                             try {
-                                await onToggleRead(notif.id);
+                                toggleNotificationReadStatus(notif.id.toString());
                             } catch (error) {
                                 console.error("Error toggling read status:", error);
                             }
@@ -86,7 +84,7 @@ const NotificationMenuItem: React.FC<NotificationMenuItemProps> = ({
                         onClick={async (e) => {
                             e.stopPropagation();
                             try {
-                                await onDelete(notif.id);
+                                removeNotification(notif.id.toString());
                             } catch (error) {
                                 console.error("Failed to delete notification:", error);
                             }

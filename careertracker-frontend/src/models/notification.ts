@@ -1,8 +1,10 @@
 // Define the TypeScript Interface for a Notification
 export interface Notification {
     id: string | number;
+    userId: string;
+    jobApplicationId: string;
     message: string;
     isRead: boolean;
-    jobApplicationId: string;
-    // ... other properties
+    createdAt: string,
+    expireAt: number
 }

@@ -2,12 +2,15 @@ import { createContext, type ReactNode, useContext, useEffect, useState } from '
 
 import { fetchCurrentUser } from "../api/userApi.ts";
 import { connectSocket } from '../webSocket/socket.ts';
+import { type Notification } from '../models/notification.ts';
+import { deleteNotification, editNotificationReadStatus } from '../api/notificationsApi.ts';
+
 
 
 export interface User {
     id: string;
     name: string;
-    notifications?: object[];
+    notifications?: Notification[];
 }
 
 interface UserContextType {
@@ -16,6 +19,7 @@ interface UserContextType {
     loading: boolean; // <-- Added loading here
     connected: boolean;
     removeNotification: (notificationId: string) => void;
+    toggleNotificationReadStatus: (notificationId: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -45,7 +49,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (!user) return;
         connectSocket({
             onNotification: (notification: object) => {
-                addNotification(notification);
+                addNotification(notification as Notification);
             },
             onOpen: () => {
                 setSocketConnected(true);
@@ -59,7 +63,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         });
     }, [user]);
 
-    const addNotification = (notification: object) => {
+    const addNotification = (notification: Notification) => {
         setUser((prevUser) => {
             return {
                 ...prevUser!,
@@ -67,15 +71,30 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             }
         });
     };
-    const removeNotification = (notificationId: string) => {
+    const toggleNotificationReadStatus = async (notificationId: string) => {
+        const isRead = user?.notifications?.find((notif: any) => notif.id === notificationId)?.isRead ?? false;
+        // TODO: calculate new notification when this changes to a geneic put function
+        const editedNotification = await editNotificationReadStatus(notificationId, !isRead);
         setUser((prevUser) => {
             return {
                 ...prevUser!,
-                notifications: prevUser?.notifications?.filter((notif: any) => notif.id !== notificationId) || [],
+                notifications: prevUser?.notifications?.map((notif: any) => notif.id === notificationId ? editedNotification : notif),
             }
-        });
+        })
     };
-    const value = { user, setUser, loading, connected: socketConnected, removeNotification};
+    const removeNotification = (notificationId: string) => {
+        deleteNotification(notificationId).then((res) => {
+            if (res.status === 204) {
+                setUser((prevUser) => {
+                    return {
+                        ...prevUser!,
+                        notifications: prevUser?.notifications?.filter((notif: any) => notif.id !== notificationId) || [],
+                    }
+                });
+            }
+        })
+    };
+    const value = { user, setUser, loading, connected: socketConnected, removeNotification, toggleNotificationReadStatus };
 
     if (loading) {
         return <div>Loading...</div>; // Or a loading spinner
