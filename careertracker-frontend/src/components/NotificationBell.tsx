@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
@@ -6,12 +6,10 @@ import Tooltip from '@mui/material/Tooltip';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
-import { useNavigate } from 'react-router-dom'; // Import NavigateFunction type
-
-// Icons
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import { useNavigate } from 'react-router-dom';
+
 import { useUser } from '../context/UserContext';
-import { useEffect } from 'react';
 import { type Notification } from '../models/notification.ts';
 import NotificationMenuItem from './NotificationMenuItem.tsx';
 
@@ -23,7 +21,7 @@ interface NotificationBellProps {
 const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
     const navigate = useNavigate();
     const { user, toggleNotificationReadStatus } = useUser()
-    const [localNotifications, setLocalNotifications] = React.useState<Notification[]>([]);
+    const [localNotifications, setLocalNotifications] = useState<Notification[]>([]);
 
     useEffect(() => {
         const userNotifications = (user?.notifications || []) as Notification[];
@@ -34,7 +32,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
     const unreadNotifications = localNotifications.filter(notif => !notif.isRead);
     const notificationCount = unreadNotifications.length;
 
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -69,6 +67,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
                     aria-controls={open ? 'notification-menu' : undefined}
                     aria-haspopup="true"
                     onClick={handleMenuOpen}
+                    edge="end"
                 >
                     <Badge
                         badgeContent={notificationCount}

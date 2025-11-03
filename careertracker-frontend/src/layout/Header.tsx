@@ -1,53 +1,69 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-
-// Icons
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-
 import { useUser } from '../context/UserContext';
 import NotificationBell from '../components/NotificationBell'
+import { AppBar, Badge, IconButton, Toolbar } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 
-const Header: React.FC = () => {
-    const { user, connected } = useUser(); // Cast for TypeScript safety
-    const maxCount = 99; // Define constants here or pass them down
+interface HeaderProps {
+    drawerToggle?: () => void;
+    open: boolean;
+    drawerWidth: number;
+}
+
+const Header: React.FC<HeaderProps> = ({ drawerToggle, open, drawerWidth }) => {
+    const { user, connected } = useUser();
+    const maxCount = 99;
 
     return (
-        <Box
+        <AppBar
             sx={{
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                p: 2,
-                backgroundColor: 'transparent',
-                marginLeft: '50px',
+                mb: 23,
             }}
         >
             {/* --- User Info Section --- */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccountCircleIcon />
+            <Toolbar sx={{
+                display: 'flex', alignItems: 'center',
+                transition: 'margin-left .3s',
+                marginLeft: open ? `${drawerWidth - 50}px` : 0,
+
+            }}>
+                <IconButton color="inherit" edge="start" onClick={drawerToggle} sx={{ mr: 2 }}>
+                    <MenuIcon />
+                </IconButton>
                 <Typography variant="h6">
                     Hello {user?.name}
                 </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box
-                    aria-label={connected ? 'online' : 'offline'}
-                    title={connected ? 'Online' : 'Offline'}
-                    sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        backgroundColor: connected ? 'success.main' : 'error.main',
-                        boxShadow: 1,
-                    }}
-                />
-                {/* --- Notification Bell Component --- */}
+                <Box sx={{ flexGrow: 1 }} />
                 <NotificationBell
                     maxCount={maxCount}
                 />
-            </Box>
-        </Box>
+                <Badge
+                    overlap="circular"
+                    variant="dot"
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    sx={{
+                        ml: 2,
+                        '& .MuiBadge-badge': {
+                            mr: -1,
+                            mb: 0.8,
+                            bgcolor: connected ? 'success.main' : 'error.main',
+                            color: connected ? 'success.main' : 'error.main',
+                            height: 12,
+                            minWidth: 12,
+                            borderRadius: '50%',
+                        },
+                    }}
+                >
+                    <IconButton color="inherit" edge="end" >
+                        <AccountCircleIcon />
+                    </IconButton>
+                </Badge>
+            </Toolbar>
+        </AppBar>
     );
 };
 
