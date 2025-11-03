@@ -5,12 +5,11 @@ import Typography from '@mui/material/Typography';
 // Icons
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-import {useUser} from '../context/UserContext';
+import { useUser } from '../context/UserContext';
 import NotificationBell from '../components/NotificationBell'
-import { type Notification} from '../components/NotificationBell'
 
 const Header: React.FC = () => {
-    const {user} = useUser(); // Cast for TypeScript safety
+    const { user, connected } = useUser(); // Cast for TypeScript safety
     const maxCount = 99; // Define constants here or pass them down
 
     return (
@@ -25,18 +24,29 @@ const Header: React.FC = () => {
             }}
         >
             {/* --- User Info Section --- */}
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                <AccountCircleIcon/>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AccountCircleIcon />
                 <Typography variant="h6">
                     Hello {user?.name}
                 </Typography>
             </Box>
-
-            {/* --- Notification Bell Component --- */}
-            <NotificationBell
-                userNotifications={user?.notifications as Notification[]}
-                maxCount={maxCount}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                    aria-label={connected ? 'online' : 'offline'}
+                    title={connected ? 'Online' : 'Offline'}
+                    sx={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%',
+                        backgroundColor: connected ? 'success.main' : 'error.main',
+                        boxShadow: 1,
+                    }}
+                />
+                {/* --- Notification Bell Component --- */}
+                <NotificationBell
+                    maxCount={maxCount}
+                />
+            </Box>
         </Box>
     );
 };
