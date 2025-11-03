@@ -72,18 +72,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         });
     };
     const toggleNotificationReadStatus = async (notificationId: string) => {
-        const isRead = user?.notifications?.find((notif: any) => notif.id === notificationId)?.isRead ?? false;
-        // TODO: calculate new notification when this changes to a geneic put function
-        const editedNotification = await editNotificationReadStatus(notificationId, !isRead);
-        setUser((prevUser) => {
-            return {
-                ...prevUser!,
-                notifications: prevUser?.notifications?.map((notif: any) => notif.id === notificationId ? editedNotification : notif),
-            }
-        })
+        try {
+            const isRead = user?.notifications?.find((notif: any) => notif.id === notificationId)?.isRead ?? false;
+            // TODO: calculate new notification when this changes to a geneic put function
+            const editedNotification = await editNotificationReadStatus(notificationId, !isRead);
+            setUser((prevUser) => {
+                return {
+                    ...prevUser!,
+                    notifications: prevUser?.notifications?.map((notif: any) => notif.id === notificationId ? editedNotification : notif),
+                }
+            })
+        } catch (error) { }
     };
-    const removeNotification = (notificationId: string) => {
-        deleteNotification(notificationId).then((res) => {
+    const removeNotification = async (notificationId: string) => {
+        try {
+            const res = await deleteNotification(notificationId);
             if (res.status === 204) {
                 setUser((prevUser) => {
                     return {
@@ -92,7 +95,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                     }
                 });
             }
-        })
+        } catch (error) { }
     };
     const value = { user, setUser, loading, connected: socketConnected, removeNotification, toggleNotificationReadStatus };
 
