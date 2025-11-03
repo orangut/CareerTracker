@@ -1,10 +1,12 @@
 import express from 'express';
-import {randomUUID} from 'crypto'
-import {dbClient} from "../config/dbClient";
-import {redisClient} from "../config/redis/redisClient";
-import {fetchUserNotifications, notifKey, notifSetKey} from "../utils/scheduledNotificationUtils";
+import { randomUUID } from 'crypto'
+import { dbClient } from "../config/dbClient";
+import { redisClient } from "../config/redis/redisClient";
+import { fetchUserNotifications, notifKey, notifSetKey } from "../utils/scheduledNotificationUtils";
 import WebSocketServerManager from '../webSocket/server';
 import logger from '../config/logger';
+import authenticateToken, { AuthenticatedRequest } from '../middleware/authenticateToken';
+import { userFiltersHandler } from '../middleware/filterMiddleware';
 
 const ScheduledNotificationRouter = express.Router();
 
@@ -24,9 +26,9 @@ function calculateTTL(rule: any, stage: any): number {
  * Creates a new notification with TTL
  * ----------------------------- */
 ScheduledNotificationRouter.post('/', async (req, res) => {
-    const {workerId, ruleId, stageId} = req.body;
+    const { workerId, ruleId, stageId } = req.body;
     if (!ruleId || !stageId) {
-        return res.status(400).json({error: 'ruleId and stageId are required'});
+        return res.status(400).json({ error: 'ruleId and stageId are required' });
     }
 
     try {
@@ -37,16 +39,16 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
             stage = await dbClient.stages.getById(workerId, stageId);
         } catch (err) {
             logger.error('Mongo fetch error:', err);
-            return res.status(500).json({error: 'Failed to fetch rule or stage'});
+            return res.status(500).json({ error: 'Failed to fetch rule or stage' });
         }
         if (!rule || !stage) {
-            return res.status(404).json({error: 'Rule or stage not found'});
+            return res.status(404).json({ error: 'Rule or stage not found' });
         }
 
         jobApplication = await dbClient.jobApplications.getById(workerId, stage.jobApplicationId.toString())
 
         if (jobApplication?.userId !== rule.userId) {
-            return res.status(500).json({error: "Job's userId and Rule's userId unmatched!"});
+            return res.status(500).json({ error: "Job's userId and Rule's userId unmatched!" });
         }
 
         // --- Compose notification ---
@@ -64,7 +66,7 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
             expireAt: Date.now() + ttlMs, // optional: track expiry
         };
 
-        WebSocketServerManager.sendNotification(rule.userId.toString(), notification.message);
+        WebSocketServerManager.sendNotification(rule.userId.toString(), notification);
 
         const notifRedisKey = notifKey(rule.userId.toString(), notificationId);
         const userSetRedisKey = notifSetKey(rule.userId.toString());
@@ -84,7 +86,7 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
         });
     } catch (err) {
         logger.error('Error creating notification:', err);
-        res.status(500).json({error: 'Internal server error'});
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -93,15 +95,39 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
  * Fetches all active notifications for a user
  * ----------------------------- */
 ScheduledNotificationRouter.get('/:userId', async (req, res) => {
-    const {userId} = req.params;
+    const { userId } = req.params;
 
     try {
         const notifications = await fetchUserNotifications(userId);
         res.status(200).json(notifications.filter(Boolean));
     } catch (err) {
         logger.error('Error fetching notifications:', err);
-        res.status(500).json({error: 'Failed to fetch notifications'});
+        res.status(500).json({ error: 'Failed to fetch notifications' });
     }
+});
+
+ScheduledNotificationRouter.delete('/:notificationId', authenticateToken, userFiltersHandler, async (req: AuthenticatedRequest, res) => {
+    const { userId } = req;
+    const { notificationId } = req.params;
+    try {
+        if (!userId) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        //TODO: implement delete from redis logic
+    } catch (err) { }
+});
+
+ScheduledNotificationRouter.patch('/:notificationId/toggle-read/:isRead', authenticateToken, userFiltersHandler, async (req: AuthenticatedRequest, res) => {
+    const { userId } = req;
+    const { notificationId, isRead } = req.params;
+    try {
+        if (!userId) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        //TODO: implement mark as read logic
+    } catch (err) { }
 });
 
 export default ScheduledNotificationRouter;

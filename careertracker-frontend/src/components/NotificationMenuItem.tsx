@@ -20,7 +20,6 @@ const NotificationMenuItem: React.FC<NotificationMenuItemProps> = ({
 }) => {
     return (
         <MenuItem
-            key={notif.id}
             disableRipple
             onClick={(e: React.MouseEvent<HTMLLIElement>) => e.stopPropagation()}
             sx={{

@@ -14,6 +14,8 @@ interface UserContextType {
     user: User | null;
     setUser: (user: User | null) => void;
     loading: boolean; // <-- Added loading here
+    connected: boolean;
+    removeNotification: (notificationId: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -21,6 +23,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [socketConnected, setSocketConnected] = useState(false);
 
     // Check for authentication on initial load
     useEffect(() => {
@@ -43,6 +46,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         connectSocket({
             onNotification: (notification: object) => {
                 addNotification(notification);
+            },
+            onOpen: () => {
+                setSocketConnected(true);
+            },
+            onClose: () => {
+                setSocketConnected(false);
+            },
+            onError: () => {
+                setSocketConnected(false);
             }
         });
     }, [user]);
@@ -55,7 +67,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             }
         });
     };
-    const value = { user, setUser, loading };
+    const removeNotification = (notificationId: string) => {
+        setUser((prevUser) => {
+            return {
+                ...prevUser!,
+                notifications: prevUser?.notifications?.filter((notif: any) => notif.id !== notificationId) || [],
+            }
+        });
+    };
+    const value = { user, setUser, loading, connected: socketConnected, removeNotification};
 
     if (loading) {
         return <div>Loading...</div>; // Or a loading spinner

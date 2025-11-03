@@ -31,6 +31,9 @@ export function connectSocket(operations: {
 
         socket.onclose = () => {
             onClose?.();
+            setTimeout(() => {
+                connectSocket(operations);
+            }, 5000); // Attempt reconnection after 5 seconds
         };
 
         socket.onerror = (error) => {

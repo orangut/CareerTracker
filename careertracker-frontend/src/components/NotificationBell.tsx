@@ -14,6 +14,7 @@ import { useUser } from '../context/UserContext';
 import { useEffect } from 'react';
 import { type Notification } from '../models/notification.ts';
 import NotificationMenuItem from './NotificationMenuItem.tsx';
+import { deleteNotification, toggleNotificationReadStatus } from '../api/notificationsApi.ts';
 
 
 // Define the Props for the NotificationBell component
@@ -27,7 +28,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
     // we only work with the notification array provided via props.
 
     const navigate = useNavigate();
-    const { user } = useUser()
+    const { user, removeNotification } = useUser()
     // Use local state to manage the notification list
     const [localNotifications, setLocalNotifications] = React.useState<Notification[]>([]);
 
@@ -57,14 +58,15 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
                 notif.id === notificationId ? { ...notif, isRead: !notif.isRead } : notif
             )
         );
-        // FUTURE: API call here
+        toggleNotificationReadStatus(notificationId.toString(), localNotifications.find(notif => notif.id === notificationId)?.isRead ? false : true);
     };
 
     const handleDeleteNotification = async (notificationId: string | number) => {
         setLocalNotifications(prevNotifs =>
             prevNotifs.filter(notif => notif.id !== notificationId)
         );
-        // FUTURE: API call here
+        removeNotification(notificationId.toString());
+        deleteNotification(notificationId.toString());
     };
 
     const handleNavigateToApplication = async (
@@ -129,6 +131,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
                         <Divider key={"firstDivider"} sx={{ my: 0.5 }} />,
                         ...localNotifications.map((notif) => (
                             <NotificationMenuItem
+                                key={`notif menue item ${notif.id}`}
                                 notification={notif}
                                 onNavigate={handleNavigateToApplication}
                                 onToggleRead={handleToggleReadStatus}
