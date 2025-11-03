@@ -8,6 +8,7 @@ export const deleteNotification = async (id: string) => {
 };
 
 export const editNotificationReadStatus = async (id: string, isRead: boolean) :  Promise<Notification> => {
-    const res = await axiosClient.patch(`${BASE_URL}/${id}/toggle-read/${isRead}`);
+    const data = { isRead };
+    const res = await axiosClient.put(`${BASE_URL}/${id}/toggle-read`, data);
     return res.data as Notification;
 }

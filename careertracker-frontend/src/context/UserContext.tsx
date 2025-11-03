@@ -73,9 +73,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
     const toggleNotificationReadStatus = async (notificationId: string) => {
         try {
-            const isRead = user?.notifications?.find((notif: any) => notif.id === notificationId)?.isRead ?? false;
+            const newIsRead = !(user?.notifications?.find((notif: any) => notif.id === notificationId)?.isRead);
             // TODO: calculate new notification when this changes to a geneic put function
-            const editedNotification = await editNotificationReadStatus(notificationId, !isRead);
+            const editedNotification = await editNotificationReadStatus(notificationId, newIsRead);
             setUser((prevUser) => {
                 return {
                     ...prevUser!,
@@ -87,7 +87,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const removeNotification = async (notificationId: string) => {
         try {
             const res = await deleteNotification(notificationId);
-            if (res.status === 204) {
+            if (res.status === 200 || res.status === 201) {
                 setUser((prevUser) => {
                     return {
                         ...prevUser!,
