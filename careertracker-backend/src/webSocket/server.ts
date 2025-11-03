@@ -13,7 +13,6 @@ class WebSocketServerManager {
     private wss?: WebSocketServer;
     private userSockets = new Map<string, WebSocket>();
 
-    private constructor() { }
 
     static getInstance(): WebSocketServerManager {
         if (!WebSocketServerManager.instance) {
