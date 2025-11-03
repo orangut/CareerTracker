@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useUser } from '../context/UserContext';
 import NotificationBell from '../components/NotificationBell'
-import { AppBar, IconButton, Toolbar } from '@mui/material';
+import { AppBar, Badge, IconButton, Toolbar } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 
 interface HeaderProps {
@@ -14,8 +14,8 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ drawerToggle, open, drawerWidth }) => {
-    const { user, connected } = useUser(); // Cast for TypeScript safety
-    const maxCount = 99; // Define constants here or pass them down
+    const { user, connected } = useUser();
+    const maxCount = 99; 
 
     return (
         <AppBar
@@ -38,24 +38,30 @@ const Header: React.FC<HeaderProps> = ({ drawerToggle, open, drawerWidth }) => {
                     Hello {user?.name}
                 </Typography>
                 <Box sx={{ flexGrow: 1 }} />
-                <Box
-                    aria-label={connected ? 'online' : 'offline'}
-                    title={connected ? 'Online' : 'Offline'}
-                    sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        backgroundColor: connected ? 'success.main' : 'error.main',
-                        boxShadow: 1,
-                    }}
-                />
-                {/* --- Notification Bell Component --- */}
                 <NotificationBell
                     maxCount={maxCount}
                 />
-                <IconButton color="inherit" edge="end" sx={{ ml: 2 }}>
-                    <AccountCircleIcon />
-                </IconButton>
+                <Badge
+                    overlap="circular"
+                    variant="dot"
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    sx={{
+                        ml: 2,
+                        '& .MuiBadge-badge': {
+                            mr: -1,
+                            mb: 0.8,
+                            bgcolor: connected ? 'success.main' : 'error.main',
+                            color: connected ? 'success.main' : 'error.main',
+                            height: 12,
+                            minWidth: 12,
+                            borderRadius: '50%',
+                        },
+                    }}
+                >
+                    <IconButton color="inherit" edge="end" sx={{ ml: 2 }}>
+                        <AccountCircleIcon />
+                    </IconButton>
+                </Badge>
             </Toolbar>
         </AppBar>
     );
