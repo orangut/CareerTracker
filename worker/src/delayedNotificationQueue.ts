@@ -17,7 +17,7 @@ export async function enqueueNotification(userId: string, notifications: Schedul
         notifications.map(notification => ({
             name: 'trigger-notification',
             data: notification,
-            opts: {jobId: uuidv4(), delay: Math.max(0, notification.triggerTime - Date.now())},
+            opts: {jobId: uuidv4(), delay: Math.max(0, notification.triggerTime - Date.now()) / 360},
         }))
     )
 
