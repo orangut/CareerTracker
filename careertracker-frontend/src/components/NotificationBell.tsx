@@ -16,19 +16,13 @@ import { type Notification } from '../models/notification.ts';
 import NotificationMenuItem from './NotificationMenuItem.tsx';
 
 
-// Define the Props for the NotificationBell component
 interface NotificationBellProps {
-    // userNotifications: Notification[] | undefined;
     maxCount: number;
 }
 
 const NotificationBell: React.FC<NotificationBellProps> = ({ maxCount }) => {
-    // Note: The structure of the user object is abstracted,
-    // we only work with the notification array provided via props.
-
     const navigate = useNavigate();
     const { user, toggleNotificationReadStatus } = useUser()
-    // Use local state to manage the notification list
     const [localNotifications, setLocalNotifications] = React.useState<Notification[]>([]);
 
     useEffect(() => {

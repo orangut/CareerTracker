@@ -16,7 +16,7 @@ export interface User {
 interface UserContextType {
     user: User | null;
     setUser: (user: User | null) => void;
-    loading: boolean; // <-- Added loading here
+    loading: boolean;
     connected: boolean;
     removeNotification: (notificationId: string) => void;
     toggleNotificationReadStatus: (notificationId: string) => void;
@@ -36,7 +36,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 const res = await fetchCurrentUser();
                 setUser({ id: res._id, name: res.username, notifications: res.notifications });
             } catch (error) {
-                // If the cookie is expired or invalid, the request will fail
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -74,8 +73,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const toggleNotificationReadStatus = async (notificationId: string) => {
         try {
             const newIsRead = !(user?.notifications?.find((notif: any) => notif.id === notificationId)?.isRead);
-            // TODO: calculate new notification when this changes to a geneic put function
-            const editedNotification = await editNotificationReadStatus(notificationId, newIsRead);
+            const editedNotification = await editNotificationReadStatus(notificationId, { isRead: newIsRead });
             setUser((prevUser) => {
                 return {
                     ...prevUser!,
