@@ -61,7 +61,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 setSocketConnected(false);
             }
         });
-    }, [user]);
+    }, [user?.id]);
 
     const addNotification = (notification: Notification) => {
         setUser((prevUser) => {

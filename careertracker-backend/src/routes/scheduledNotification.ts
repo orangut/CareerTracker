@@ -3,7 +3,7 @@ import {randomUUID} from 'crypto'
 import {dbClient} from "../config/dbClient";
 import {redisClient} from "../config/redis/redisClient";
 import {fetchUserNotifications, notifKey, notifSetKey} from "../utils/scheduledNotificationUtils";
-import WebSocketServerManager from '../webSocket/server';
+import {sendNotification} from '../webSocket/server';
 import logger from '../config/logger';
 import authenticateToken, {AuthenticatedRequest} from '../middleware/authenticateToken';
 import {userFiltersHandler} from '../middleware/filterMiddleware';
@@ -67,7 +67,7 @@ ScheduledNotificationRouter.post('/', async (req, res) => {
             expireAt: Date.now() + ttlMs, // optional: track expiry
         };
 
-        WebSocketServerManager.sendNotification(rule.userId.toString(), notification);
+        sendNotification(rule.userId.toString(), notification);
 
         const notifRedisKey = notifKey(rule.userId.toString(), notificationId);
         const userSetRedisKey = notifSetKey(rule.userId.toString());
@@ -132,8 +132,8 @@ ScheduledNotificationRouter.delete('/:notificationId', authenticateToken, userFi
 });
 
 ScheduledNotificationRouter.put('/:notificationId', authenticateToken, userFiltersHandler, async (req: AuthenticatedRequest, res) => {
-    const { userId } = req;
-    const { notificationId } = req.params;
+    const {userId} = req;
+    const {notificationId} = req.params;
 
     // --- Main Try/Catch Block ---
     // This catches any unexpected errors (e.g., Redis connection lost)

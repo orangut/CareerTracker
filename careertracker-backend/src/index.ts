@@ -19,8 +19,8 @@ import logger from './config/logger';
 import cookieParser from 'cookie-parser';
 
 // Import WebSocket server attachment function
-import { attachWebSocketServer } from './webSocket/server';
-
+import {initWebSocketServer} from './webSocket/server';
+import {NOTIFICATION_CHANNEL, subscriberClient} from "./pubSubSubscriber";
 
 dotenv.config();
 
@@ -65,11 +65,17 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // --- API Routes ---
 app.use('/api', apiRouter);
 
-try {
-    const server = app.listen(PORT, () => {
-        logger.info(`Server is running on port ${PORT}`);
-    });
-    attachWebSocketServer(server);
-} catch (error) {
-    logger.error('Failed to start server:', error);
-}
+(async () => {
+    try {
+        await subscriberClient.subscribe(NOTIFICATION_CHANNEL);
+        logger.info(`Backend instance subscribed to Redis channel: ${NOTIFICATION_CHANNEL}`);
+
+        const server = app.listen(PORT, () => {
+            logger.info(`Server is running on port ${PORT}`);
+        });
+        initWebSocketServer(server);
+    } catch (err: any) {
+        logger.error('Failed to subscribe to Redis or start server:', err.message);
+        process.exit(1); // Exit if we can't subscribe; it's a critical failure
+    }
+})();

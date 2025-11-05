@@ -3,7 +3,7 @@ import {operationType, Transaction, transactionType} from '../interfaces';
 import logger from "../config/logger";
 import {connectionDetails, TRANSACTION_QUEUE} from "../config/redisClient";
 import {getNotificationsToCreate} from "../transactionHandlers/stageTransactionHandler";
-import {dequeueNotification, enqueueNotification} from "../queue";
+import {dequeueNotification, enqueueNotification} from "../delayedNotificationQueue";
 
 export const notificationCalculationWorker = new Worker<Transaction>(
     TRANSACTION_QUEUE,
